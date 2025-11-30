@@ -1,7 +1,6 @@
 package com.tilescan
 
 import android.Manifest.permission.WRITE_SECURE_SETTINGS
-import android.content.Context
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.provider.Settings
 import android.service.quicksettings.Tile
@@ -9,32 +8,31 @@ import android.service.quicksettings.TileService
 
 class ExtraDimTileService : TileService() {
 
-    private val prefs by lazy { getSharedPreferences("tile_prefs", Context.MODE_PRIVATE) }
-
     override fun onStartListening() {
         updateUi()
     }
 
     override fun onClick() {
-        // Nếu chưa có quyền thì im lặng thoát, không hiện thông báo
         if (checkSelfPermission(WRITE_SECURE_SETTINGS) != PERMISSION_GRANTED) return
 
-        // 1. Tính toán trạng thái mới
-        val newState = !prefs.getBoolean("is_dim", false)
+        // 1. Đọc trạng thái thật từ hệ thống (1 = On, 0 = Off)
+        val current = Settings.Secure.getInt(contentResolver, "reduce_bright_colors_activated", 0)
+        val newState = if (current == 1) 0 else 1
 
-        // 2. Gửi lệnh hệ thống (Bọc runCatching để an toàn)
+        // 2. Gửi lệnh toggle
         runCatching {
-            Settings.Secure.putInt(contentResolver, "reduce_bright_colors_activated", if (newState) 1 else 0)
+            Settings.Secure.putInt(contentResolver, "reduce_bright_colors_activated", newState)
         }
 
-        // 3. Lưu trạng thái và cập nhật icon
-        prefs.edit().putBoolean("is_dim", newState).apply()
+        // 3. Cập nhật icon Tile ngay lập tức
         updateUi()
     }
 
     private fun updateUi() {
         qsTile?.run {
-            state = if (prefs.getBoolean("is_dim", false)) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+            // Đọc lại từ hệ thống để hiển thị đúng trạng thái
+            val isActive = Settings.Secure.getInt(contentResolver, "reduce_bright_colors_activated", 0) == 1
+            state = if (isActive) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
             updateTile()
         }
     }
