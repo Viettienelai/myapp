@@ -1,4 +1,4 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.app.PendingIntent
 import android.content.Intent

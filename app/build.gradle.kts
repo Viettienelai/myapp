@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.tilescan"
+    namespace = "com.myapp"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.tilescan"
+        applicationId = "com.myapp"
         minSdk = 34
         targetSdk = 36
         versionCode = 2

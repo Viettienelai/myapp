@@ -1,4 +1,4 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.Manifest.permission.WRITE_SECURE_SETTINGS
 import android.content.pm.PackageManager.PERMISSION_GRANTED

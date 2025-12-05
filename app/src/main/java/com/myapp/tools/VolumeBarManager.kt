@@ -1,4 +1,4 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -7,7 +7,6 @@ import android.content.Context.WINDOW_SERVICE
 import android.graphics.Color
 import android.graphics.Rect
 import android.media.AudioManager
-import android.os.Build
 import android.view.*
 import android.widget.FrameLayout
 
@@ -17,11 +16,8 @@ class VolumeBarManager(private val ctx: Context) {
     private var barView: View? = null
 
     // SỬA: Xác định loại Overlay
-    private val layoutType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    private val layoutType =
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-    } else {
-        WindowManager.LayoutParams.TYPE_PHONE
-    }
 
     fun setup() {
         addBar(400, 300, Color.TRANSPARENT) {

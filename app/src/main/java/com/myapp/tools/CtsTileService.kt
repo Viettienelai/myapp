@@ -1,4 +1,4 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.annotation.SuppressLint
 import android.app.*

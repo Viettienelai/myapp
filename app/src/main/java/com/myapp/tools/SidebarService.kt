@@ -1,14 +1,13 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.myapp.R
 
 class SidebarService : Service() {
 
@@ -45,16 +44,14 @@ class SidebarService : Service() {
 
     private fun startForegroundServiceNotification() {
         val channelId = "SidebarBackgroundChannel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Sidebar Service",
-                NotificationManager.IMPORTANCE_MIN // Mức thấp nhất để không làm phiền
-            )
-            channel.description = "Keeping sidebar active"
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
+        val channel = NotificationChannel(
+            channelId,
+            "Sidebar Service",
+            NotificationManager.IMPORTANCE_MIN // Mức thấp nhất để không làm phiền
+        )
+        channel.description = "Keeping sidebar active"
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Sidebar is active")

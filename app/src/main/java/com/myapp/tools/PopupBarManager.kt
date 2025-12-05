@@ -1,4 +1,4 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -13,7 +13,9 @@ import android.view.animation.*
 import android.widget.*
 import androidx.core.content.edit
 import androidx.core.view.isVisible
+import com.myapp.R
 
+@Suppress("DEPRECATION")
 class PopupBarManager(private val ctx: Context) {
 
     private val wm = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -21,11 +23,8 @@ class PopupBarManager(private val ctx: Context) {
     private var popupView: View? = null
 
     // Xác định loại Layout phù hợp cho Android mới (8.0+) và cũ
-    private val layoutType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    private val layoutType =
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-    } else {
-        WindowManager.LayoutParams.TYPE_PHONE
-    }
 
     fun setup() {
         addBar(0, 300, Color.TRANSPARENT) { showPopup() }
@@ -47,7 +46,7 @@ class PopupBarManager(private val ctx: Context) {
                 true
             }
         }
-        // SỬA: Dùng layoutType đã định nghĩa ở trên thay vì số cứng 2032
+
         val p = WindowManager.LayoutParams(20, h, layoutType, 296, -3).apply {
             gravity = Gravity.TOP or Gravity.END
             y = yPos
@@ -60,10 +59,18 @@ class PopupBarManager(private val ctx: Context) {
         if (popupView != null) return
 
         val root = FrameLayout(ctx).apply {
-            setBackgroundColor(Color.argb(90, 100, 100, 100))
+            // Logic tiết kiệm pin: Max alpha nếu bật, ngược lại 90
+            val isSave = (ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode
+            setBackgroundColor(Color.argb(if (isSave) 255 else 90, 110, 110, 110))
+
             alpha = 0f; isClickable = true
             setOnClickListener { close(this) }
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
+            // Giúp view tràn xuống dưới Navigation Bar
+            systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         }
 
         val con = LinearLayout(ctx).apply {
@@ -72,19 +79,9 @@ class PopupBarManager(private val ctx: Context) {
             translationY = -150f
         }
 
-        // --- (Giữ nguyên phần UI Pin & Grid Icons như cũ) ---
-        // Info: Pin & Nhiệt độ
-        con.addView(LinearLayout(ctx).apply {
-            gravity = 17; setPadding(0, 0, 0, 60)
-            addView(ImageView(context).apply { layoutParams = LinearLayout.LayoutParams(100, 60); setImageDrawable(Batt()) })
-            addView(TextView(context).apply {
-                setTextColor(-1); textSize = 30f; typeface = Typeface.DEFAULT_BOLD; setPadding(30, -10, 0, 0)
-                val t = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.getIntExtra("temperature", 0) ?: 0
-                text = "${t / 10f}°"
-            })
-        })
+        // --- ĐÃ XÓA PHẦN HIỂN THỊ PIN & NHIỆT ĐỘ TẠI ĐÂY ---
 
-        // Grid Icons (Rút gọn cho ngắn, logic giữ nguyên)
+        // Grid Icons
         val grid = GridLayout(ctx).apply { columnCount = 3; layoutParams = LinearLayout.LayoutParams(-2, -2).apply { gravity = 1 } }
         val tiles = listOf(
             R.drawable.scan to { exec("com.google.android.gms", "com.google.android.gms.mlkit.barcode.v2.ScannerActivity") },
@@ -109,12 +106,11 @@ class PopupBarManager(private val ctx: Context) {
 
         root.addView(TextView(ctx).apply {
             text = "ViệtTiến┇ᴱᴸᴬᴵ"; setTextColor(-1); textSize = 13f; typeface = Typeface.DEFAULT_BOLD
-            layoutParams = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = 60 }
+            layoutParams = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = 80 }
             translationY = 100f
             animate().translationY(0f).setDuration(350).start()
         })
 
-        // SỬA: Thay type 2032 bằng layoutType
         val p = WindowManager.LayoutParams(-1, -1, layoutType,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or WindowManager.LayoutParams.FLAG_BLUR_BEHIND, -3).apply {
@@ -135,24 +131,31 @@ class PopupBarManager(private val ctx: Context) {
 
     private fun close(root: View) {
         if (popupView == null) return
-        val con = (root as ViewGroup).getChildAt(0)
+        val vg = root as ViewGroup
         val p = root.layoutParams as WindowManager.LayoutParams
 
         animateBlur(root, p, p.blurBehindRadius, 0, 200)
-        con.animate().translationY(-150f).alpha(0f).setDuration(250).setInterpolator(AccelerateInterpolator()).start()
+
+        // Container (Icons): Bay lên trên và mờ dần
+        vg.getChildAt(0).animate().translationY(-200f).alpha(0f)
+            .setDuration(250).setInterpolator(AccelerateInterpolator()).start()
+
+        // Text (ViệtTiến): Bay xuống dưới
+        vg.getChildAt(1).animate().translationY(100f)
+            .setDuration(250).start()
+
+        // Root Background: Mờ dần và đóng
         root.animate().alpha(0f).setDuration(250).withEndAction {
             root.visibility = View.GONE
             root.post {
-                if (root.isAttachedToWindow) {
-                    try { wm.removeView(root) } catch(_: Exception){}
-                }
+                if (root.isAttachedToWindow) try { wm.removeView(root) } catch(_: Exception){}
                 popupView = null
             }
         }.start()
     }
 
     private fun animateBlur(v: View, p: WindowManager.LayoutParams, f: Int, t: Int, d: Long) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Blur chỉ hỗ trợ tốt từ Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ValueAnimator.ofInt(f, t).apply { duration = d; addUpdateListener {
                 if (v.isAttachedToWindow && v.isVisible) try { p.blurBehindRadius = it.animatedValue as Int; wm.updateViewLayout(v, p) } catch (_: Exception){}
             }}.start()
@@ -174,41 +177,12 @@ class PopupBarManager(private val ctx: Context) {
             val isDim = prefs.getBoolean("dim", false)
             Settings.Secure.putInt(ctx.contentResolver, "reduce_bright_colors_activated", if (!isDim) 1 else 0)
             prefs.edit { putBoolean("dim", !isDim) }
-        } else Toast.makeText(ctx, "Cần quyền Secure Settings", Toast.LENGTH_SHORT).show()
+        }
+        // ĐÃ XÓA TOAST TẠI ĐÂY
     }
 
     fun destroy() {
         barView?.let { if (it.isAttachedToWindow) wm.removeView(it) }
         popupView?.let { if (it.isAttachedToWindow) wm.removeView(it) }
-    }
-
-    class Batt : Drawable() {
-        private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 4f
-            color = Color.WHITE
-        }
-        private val f = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            color = Color.WHITE
-        }
-
-        override fun draw(c: Canvas) {
-            val w = bounds.width().toFloat()
-            val h = bounds.height().toFloat()
-
-            // Vẽ vỏ pin
-            c.drawRoundRect(2f, 2f, w - 12f, h - 2f, 6f, 6f, p)
-            // Vẽ đầu pin
-            c.drawRect(w - 10f, h / 3f, w, h * 2 / 3f, f)
-
-            // Vẽ mức pin (giả lập đầy) - Bạn có thể tùy chỉnh độ rộng theo % pin thực tế nếu muốn
-            c.drawRoundRect(8f, 8f, w - 20f, h - 8f, 2f, 2f, f)
-        }
-
-        override fun setAlpha(a: Int) {}
-        override fun setColorFilter(cf: ColorFilter?) {}
-        @Deprecated("Deprecated in Java")
-        override fun getOpacity() = PixelFormat.TRANSLUCENT
     }
 }

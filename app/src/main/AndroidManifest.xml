@@ -1,30 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.myapp"> <!-- DÒNG QUAN TRỌNG NHẤT: Phải có dòng này -->
 
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions"
         xmlns:tools="http://schemas.android.com/tools"/>
-    <uses-permission
-        android:name="android.permission.VIBRATE" />
-
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application>
-
         <activity
-            android:name=".MainActivity"
+            android:name="com.myapp.MainActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.DeviceDefault.Light"> <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <service
-            android:name=".QuickShareTileService"
+            android:name="com.myapp.tools.QuickShareTileService"
             android:exported="true"
             android:icon="@drawable/quickshare"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
@@ -33,15 +32,8 @@
             </intent-filter>
         </service>
 
-        <activity
-            android:name=".CtsActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:exported="false"/>
-
         <service
-            android:name=".CtsTileService"
+            android:name="com.myapp.tools.CtsTileService"
             android:exported="true"
             android:icon="@drawable/cts"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
@@ -51,7 +43,7 @@
         </service>
 
         <service
-            android:name=".LensTileService"
+            android:name="com.myapp.tools.LensTileService"
             android:exported="true"
             android:icon="@drawable/lens"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
@@ -61,7 +53,7 @@
         </service>
 
         <service
-            android:name=".ExtraDimTileService"
+            android:name="com.myapp.tools.ExtraDimTileService"
             android:icon="@drawable/dim"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
@@ -71,7 +63,7 @@
         </service>
 
         <service
-            android:name=".SidebarService"
+            android:name="com.myapp.tools.SidebarService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
@@ -86,6 +78,11 @@
             </intent-filter>
         </service>
 
+        <activity
+            android:name="com.myapp.tools.CtsActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:exported="false"/>
     </application>
-
 </manifest>

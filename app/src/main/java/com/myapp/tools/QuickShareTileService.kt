@@ -1,4 +1,4 @@
-package com.tilescan
+package com.myapp.tools
 
 import android.app.PendingIntent
 import android.content.ComponentName
@@ -7,24 +7,24 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.service.quicksettings.TileService
 import android.widget.Toast
 
-class ScannerTileService : TileService() {
+class QuickShareTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
 
-        // 1. Cấu hình Intent
+        // 1. Tạo Intent nhắm thẳng vào Activity đích
         val intent = Intent()
         intent.component = ComponentName(
             "com.google.android.gms",
-            "com.google.android.gms.mlkit.barcode.v2.ScannerActivity"
+            "com.google.android.gms.nearby.sharing.ReceiveUsingSamsungQrCodeMainActivity"
         )
         intent.flags = FLAG_ACTIVITY_NEW_TASK
         intent.action = Intent.ACTION_MAIN
 
-        // 2. Logic thực thi (Gói gọn để dùng chung)
+        // 2. Logic mở khóa và chạy (Gọn nhất)
         val runner = Runnable {
             try {
-                // Bắt buộc dùng PendingIntent cho Android 14+
+                // Trên Android 14+, bắt buộc gói Intent vào PendingIntent
                 val pendingIntent = PendingIntent.getActivity(
                     this,
                     0,
@@ -32,12 +32,11 @@ class ScannerTileService : TileService() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 startActivityAndCollapse(pendingIntent)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Lỗi mở Scanner", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                Toast.makeText(this, "Lỗi mở Quick Share", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 3. Kiểm tra khóa màn hình
         if (isLocked) {
             unlockAndRun(runner)
         } else {
