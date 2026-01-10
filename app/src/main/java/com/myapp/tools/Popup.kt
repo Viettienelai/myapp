@@ -20,16 +20,21 @@ class Popup(private val c: Context) {
     private var bar: View? = null
     private var pop: View? = null
 
-    // ip: Dùng cho background, text và animation đóng (mượt mà, không nảy)
     private val ip = DecelerateInterpolator(2f)
 
-    private val lpBar = WindowManager.LayoutParams(20, 300, 2038, 296, -3).apply { gravity = Gravity.TOP or Gravity.END }
+    private val lpBar = WindowManager.LayoutParams(40, 400, 2038, 296, -3).apply { gravity = Gravity.TOP or Gravity.END }
 
     @SuppressLint("ClickableViewAccessibility")
     fun setup() {
         val v = FrameLayout(c).apply {
-            setBackgroundColor(0); setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-            systemGestureExclusionRects = listOf(Rect(0, 0, 20, 300))
+            setBackgroundColor(Color.BLUE) // Nhớ đổi thành 0 khi build
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+
+            // Tự động cập nhật vùng chống Back theo kích thước thật
+            addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
+                view.systemGestureExclusionRects = listOf(Rect(0, 0, view.width, view.height))
+            }
+
             var x = 0f; var d = false
             setOnTouchListener { _, e ->
                 when (e.action) {
@@ -50,17 +55,31 @@ class Popup(private val c: Context) {
     @SuppressLint("SetTextI18n")
     private fun show() {
         if (pop != null) return
+
+        // 1. ROOT CONTAINER
         val root = FrameLayout(c).apply {
             val save = (c.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode
             setBackgroundColor(Color.argb(if (save) 255 else 90, 110, 110, 110))
             alpha = 0f; isClickable = true; setOnClickListener { close(this) }
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
             systemUiVisibility = 1280
-        }
-        val grid = GridLayout(c).apply { columnCount = 3; layoutParams = FrameLayout.LayoutParams(-2, -2, 17) }
-        val setOn = { on: Boolean -> p.edit { putBoolean("on", on) }; keep(on) }
 
-        // osIp: Dùng riêng cho hiệu ứng nảy của các icon (1.5f là độ nảy)
+            // FIX OVERFLOW: Cho phép con vẽ tràn ra ngoài cha
+            clipChildren = false
+            clipToPadding = false
+        }
+
+        // 2. GRID CONTAINER
+        val grid = GridLayout(c).apply {
+            columnCount = 4
+            layoutParams = FrameLayout.LayoutParams(-2, -2, 17)
+
+            // FIX OVERFLOW: Cho phép icon phóng to tràn ra khỏi grid
+            clipChildren = false
+            clipToPadding = false
+        }
+
+        val setOn = { on: Boolean -> p.edit { putBoolean("on", on) }; keep(on) }
         val osIp = OvershootInterpolator(2f)
 
         listOf(
@@ -80,17 +99,13 @@ class Popup(private val c: Context) {
             R.drawable.clean to { Cleaner.clean() }
         ).forEachIndexed { i, (ic, fn) ->
             grid.addView(FrameLayout(c).apply {
-                layoutParams = GridLayout.LayoutParams().apply { width = 190; height = 190; setMargins(30, 40, 30, 40) }
+                layoutParams = GridLayout.LayoutParams().apply { width = 180; height = 180; setMargins(25, 35, 25, 35) }
                 background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(if (ic == R.drawable.screenon && p.getBoolean("on", false)) Color.rgb(33, 124, 255) else Color.argb(120, 0, 0, 0)) }
                 addView(ImageView(c).apply { setImageResource(ic); setColorFilter(-1); layoutParams = FrameLayout.LayoutParams(75, 75, 17) })
                 setOnClickListener { fn(); close(root) }
 
-                // Animation Overshoot cho icon/oval
                 alpha = 0f; translationY = -250f; scaleX = 0.5f; scaleY = 0.1f
-
-                // Tính toán delay: Hàng 1 (index 0,1,2) delay 0; Hàng 2 (index 3,4,5) delay 200...
-                val d = (i / 3 * 100).toLong()
-
+                val d = (i / 4 * 100).toLong()
                 animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
                     .setInterpolator(osIp)
                     .setDuration(600)
@@ -103,21 +118,32 @@ class Popup(private val c: Context) {
         root.addView(TextView(c).apply {
             text = "ViệtTiến┇ᴱᴸᴬᴵ"; setTextColor(-1); textSize = 13f; typeface = Typeface.DEFAULT_BOLD
             layoutParams = FrameLayout.LayoutParams(-2, -2, 81).apply { bottomMargin = 80 }
-            // Animation Decelerate (ip) cho text
             translationY = 50f; animate().translationY(0f).setInterpolator(ip).setDuration(800).start()
         })
 
-        val lp = WindowManager.LayoutParams(-1, -1, 2038, 262404, -3).apply { blurBehindRadius = 0; layoutInDisplayCutoutMode = 1 }
+        // 3. WINDOW PARAMS
+        // 262404 = Flag gốc (Chứa FLAG_BLUR_BEHIND) -> Giữ lại để có Blur
+        // FLAG_DIM_BEHIND -> Thêm vào để fix lỗi blur chập chờn
+        val flags = 262404 or WindowManager.LayoutParams.FLAG_DIM_BEHIND
+
+        val lp = WindowManager.LayoutParams(-1, -1, 2038, flags, -3).apply {
+            blurBehindRadius = 0
+            layoutInDisplayCutoutMode = 1
+            dimAmount = 0f // Dim = 0 để hệ thống kích hoạt layer background nhưng không làm tối
+        }
+
         w.addView(root, lp); pop = root
-        // Animation Decelerate (ip) cho background blur và alpha toàn bộ view
-        root.post { blur(root, lp, 0, 500); root.animate().alpha(1f).setInterpolator(ip).setDuration(800).start() }
+
+        root.post {
+            blur(root, lp, 0, 500)
+            root.animate().alpha(1f).setInterpolator(ip).setDuration(800).start()
+        }
     }
 
     private fun close(v: View) {
         if (pop == null) return
         val lp = v.layoutParams as WindowManager.LayoutParams
         blur(v, lp, lp.blurBehindRadius, 0)
-        // Khi đóng dùng ip (Decelerate) để thu về mượt mà, không cần nảy
         (v as ViewGroup).getChildAt(0).animate().translationY(-50f).alpha(0f).setInterpolator(ip).setDuration(250).start()
         v.getChildAt(1).animate().translationY(50f).setInterpolator(ip).setDuration(250).start()
         v.animate().alpha(0f).setInterpolator(ip).setDuration(250).withEndAction {
@@ -129,7 +155,12 @@ class Popup(private val c: Context) {
     private fun blur(v: View, lp: WindowManager.LayoutParams, f: Int, t: Int) {
         ValueAnimator.ofInt(f, t).apply {
             duration = 800; interpolator = ip
-            addUpdateListener { if (v.isAttachedToWindow) runCatching { lp.blurBehindRadius = it.animatedValue as Int; w.updateViewLayout(v, lp) } }
+            addUpdateListener {
+                if (v.isAttachedToWindow) runCatching {
+                    lp.blurBehindRadius = it.animatedValue as Int
+                    w.updateViewLayout(v, lp)
+                }
+            }
         }.start()
     }
 

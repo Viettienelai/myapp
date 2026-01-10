@@ -20,7 +20,7 @@ class VolumeBar(private val ctx: Context) {
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
     fun setup() {
-        addBar(400, 300, Color.TRANSPARENT) {
+        addBar(400, 300, Color.RED) {
             val am = ctx.getSystemService(AUDIO_SERVICE) as AudioManager
             am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
         }
@@ -47,7 +47,7 @@ class VolumeBar(private val ctx: Context) {
         }
 
         val p = WindowManager.LayoutParams(
-            20, h, layoutType, // SỬA: Dùng Type mới
+            40, h, layoutType, // SỬA: Dùng Type mới
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
