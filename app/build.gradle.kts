@@ -49,4 +49,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")
     implementation(libs.kotlinx.coroutines.android)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 }
