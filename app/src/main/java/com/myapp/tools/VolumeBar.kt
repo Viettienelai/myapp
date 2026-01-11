@@ -20,7 +20,7 @@ class VolumeBar(private val ctx: Context) {
         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
     fun setup() {
-        addBar(400, 300, Color.RED) {
+        addBar(400, 320, Color.argb(50, 255, 0, 0)) {
             val am = ctx.getSystemService(AUDIO_SERVICE) as AudioManager
             am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
         }
