@@ -84,7 +84,7 @@ class Popup(
 
         val slider = FrameLayout(c).apply {
             layoutParams = LinearLayout.LayoutParams(sliderW, sliderH)
-            background = GradientDrawable().apply { shape = GradientDrawable.RECTANGLE; cornerRadius = 150f; setColor(Color.argb(80, 255, 255, 255)) }
+            background = GradientDrawable().apply { shape = GradientDrawable.RECTANGLE; cornerRadius = 150f; setColor(Color.argb(60, 255, 255, 255)) }
         }
         slider.addView(ImageView(c).apply { setImageResource(R.drawable.drive); layoutParams = FrameLayout.LayoutParams(120, 120, 49).apply { topMargin = 75 } })
         slider.addView(ImageView(c).apply { setImageResource(R.drawable.phone); layoutParams = FrameLayout.LayoutParams(150, 150, 81).apply { bottomMargin = 75 } })

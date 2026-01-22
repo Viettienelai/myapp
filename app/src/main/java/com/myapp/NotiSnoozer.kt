@@ -22,7 +22,8 @@ class NotiSnoozer : NotificationListenerService() {
         "charging complete",
         "checking for new messages",
         "chat heads active",
-        "via is downloading files"
+        "via is downloading files",
+        "zStyle"
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
