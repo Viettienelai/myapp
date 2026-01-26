@@ -10,6 +10,7 @@ import android.media.AudioManager
 import android.view.*
 import android.widget.FrameLayout
 import kotlin.math.abs
+import android.graphics.drawable.GradientDrawable
 
 class VolumeBar(private val ctx: Context) {
 
@@ -28,7 +29,7 @@ class VolumeBar(private val ctx: Context) {
     @SuppressLint("ClickableViewAccessibility")
     private fun addBar(yPos: Int, h: Int, color: Int, act: () -> Unit) {
         val p = WindowManager.LayoutParams(
-            60, h, layoutType,
+            60, h, layoutType, // 60 là chiều rộng vùng cảm ứng
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -36,13 +37,40 @@ class VolumeBar(private val ctx: Context) {
         ).apply {
             gravity = Gravity.TOP or Gravity.END
             y = yPos
-            // Tắt animation hệ thống để update flag diễn ra tức thì
             windowAnimations = 0
         }
 
+        // 1. Vùng cảm ứng (Trong suốt)
         val v = FrameLayout(ctx).apply {
-            setBackgroundColor(color)
+            setBackgroundColor(Color.TRANSPARENT) // Giữ vùng này trong suốt
             setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+
+            // 2. Tạo Indicator (Thanh mờ nhỏ bên trong)
+            val indicator = View(ctx).apply {
+                val density = ctx.resources.displayMetrics.density
+
+                // 1. Tùy chỉnh kích thước
+                val indicatorWidth = (4 * density).toInt()
+                layoutParams = FrameLayout.LayoutParams(
+                    indicatorWidth,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                ).apply {
+                    gravity = Gravity.END
+                    rightMargin = (3 * density).toInt()
+                }
+
+                // 2. Tạo hình dạng bo tròn bằng GradientDrawable (thay thế setBackgroundColor)
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setColor(Color.argb(90, 120, 120, 120)) // Màu xám mờ
+
+                    // Bo tròn góc: lấy bán kính bằng 1/2 chiều rộng để tạo hình viên thuốc (capsule)
+                    cornerRadius = indicatorWidth / 2f
+                }
+            }
+
+            // Thêm indicator vào trong vùng cảm ứng
+            addView(indicator)
 
             addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
                 view.systemGestureExclusionRects = listOf(Rect(0, 0, view.width, view.height))

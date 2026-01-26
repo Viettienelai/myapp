@@ -31,9 +31,9 @@ class Popup(private val c: Context) {
         destroy()
 
         // 1. Tạo LayoutParams trước
-        val lp = WindowManager.LayoutParams(60, 290, 2038, 776, -3).apply {
+        val lp = WindowManager.LayoutParams(60, 300, 2038, 776, -3).apply {
             gravity = Gravity.TOP or Gravity.END
-            y = 120
+            y = 710
             // Tắt animation để update flag tức thì
             windowAnimations = 0
         }

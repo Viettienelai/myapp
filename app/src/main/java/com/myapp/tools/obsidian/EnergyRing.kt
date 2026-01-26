@@ -202,7 +202,7 @@ object EnergyRing {
             if (progressAnim?.isRunning == true) progressAnim?.cancel()
 
             progressAnim = ValueAnimator.ofFloat(progress, target).apply {
-                duration = 300
+                duration = 1000
                 interpolator = DecelerateInterpolator()
                 addUpdateListener {
                     progress = it.animatedValue as Float

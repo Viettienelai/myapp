@@ -27,10 +27,17 @@ class Popup(
 ) {
 
     fun checkAndShowSync(grid: View) {
-        val hasEmail = Config.getUserEmail(c) != null
-        val hasConf = File(c.filesDir, "rclone.conf").exists()
+        // SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY:
+        // Không kiểm tra file rclone.conf nữa vì SyncWorker sẽ tự tạo nó khi chạy lần đầu.
+        // Chỉ cần kiểm tra xem user đã đăng nhập email và đã chọn thư mục (nếu cần) hay chưa.
 
-        if (hasEmail && hasConf) {
+        val hasEmail = Config.getUserEmail(c) != null
+
+        // (Tùy chọn) Nếu bạn bắt buộc user phải chọn folder đích thì thêm check này:
+        // val hasRootFolder = Config.getRootFolderId(c) != null
+        // val isReady = hasEmail && hasRootFolder
+
+        if (hasEmail) { // Hoặc if (isReady)
             grid.animate().alpha(0f).scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction {
                 root.removeView(grid)
                 showSyncSlider()
