@@ -7,8 +7,10 @@ import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.*
-import android.os.Build
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
@@ -46,9 +48,7 @@ object EnergyRing {
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             }
 
-            val type = if (Build.VERSION.SDK_INT >= 26)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY
+            val type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
             layoutParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -62,9 +62,7 @@ object EnergyRing {
             ).apply {
                 gravity = Gravity.TOP
                 height = 300
-                if (Build.VERSION.SDK_INT >= 28) {
-                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                }
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
 
             try {
@@ -265,12 +263,10 @@ object EnergyRing {
             var cy = 60f
             var baseRadius = 30f
 
-            if (Build.VERSION.SDK_INT >= 28) {
-                rootWindowInsets?.displayCutout?.boundingRects?.firstOrNull()?.let {
-                    cx = it.exactCenterX()
-                    cy = it.exactCenterY()
-                    baseRadius = min(it.width(), it.height()) / 2f
-                }
+            rootWindowInsets?.displayCutout?.boundingRects?.firstOrNull()?.let {
+                cx = it.exactCenterX()
+                cy = it.exactCenterY()
+                baseRadius = min(it.width(), it.height()) / 2f
             }
 
             // --- 1. VẼ SCANNER (Chỉ vẽ khi đang Scan hoặc đang Thu nhỏ) ---

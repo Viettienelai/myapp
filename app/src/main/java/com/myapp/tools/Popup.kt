@@ -13,6 +13,7 @@ import androidx.core.content.edit
 import com.myapp.R
 import com.myapp.tools.obsidian.EnergyRing
 import com.myapp.tools.obsidian.Popup
+import kotlin.math.abs
 
 @Suppress("DEPRECATION")
 class Popup(private val c: Context) {
@@ -56,10 +57,10 @@ class Popup(private val c: Context) {
                                 triggered = true
                                 show()
                             } // Vuốt trái
-                            else if (dy > 50 && dy > Math.abs(dx)) { // Vuốt xuống dọc
+                            else if (dy > 50 && dy > abs(dx)) { // Vuốt xuống dọc
                                 triggered = true
                                 (c.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator).vibrate(50)
-                                c.startActivity(Intent(c, CtsActivity::class.java).addFlags(268435456))
+                                c.startActivity(Intent(c, CtsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                             }
                         }
                     }
@@ -69,13 +70,13 @@ class Popup(private val c: Context) {
                         if (!triggered) {
                             // Bật chế độ xuyên thấu (không nhận cảm ứng)
                             lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                            try { w.updateViewLayout(this, lp) } catch (e: Exception) {}
+                            try { w.updateViewLayout(this, lp) } catch (_: Exception) {}
 
                             // Sau 0.5s thì tắt chế độ xuyên thấu (nhận cảm ứng lại)
                             postDelayed({
                                 lp.flags = lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
                                 if (isAttachedToWindow) {
-                                    try { w.updateViewLayout(this, lp) } catch (e: Exception) {}
+                                    try { w.updateViewLayout(this, lp) } catch (_: Exception) {}
                                 }
                             }, 500)
                         }
@@ -85,7 +86,7 @@ class Popup(private val c: Context) {
             }
         }
 
-        try { w.addView(v, lp); bar = v } catch (e: Exception) {}
+        try { w.addView(v, lp); bar = v } catch (_: Exception) {}
     }
 
     // [MỚI] Hàm này để Sidebar gọi khi màn hình bật lại
@@ -97,11 +98,11 @@ class Popup(private val c: Context) {
 
     private fun keep(on: Boolean) = bar?.let {
         val lp = it.layoutParams as WindowManager.LayoutParams
-        lp.flags = if (on) lp.flags or 128 else lp.flags and 128.inv()
+        lp.flags = if (on) lp.flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON else lp.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON.inv()
         try {
             w.updateViewLayout(it, lp)
             it.post { it.systemGestureExclusionRects = listOf(Rect(0, 0, it.width, it.height)) }
-        } catch (e: Exception) {}
+        } catch (_: Exception) {}
     }
 
     private fun show() {
@@ -140,23 +141,23 @@ class Popup(private val c: Context) {
 
         val lp = WindowManager.LayoutParams(-1, -1, 2038, 262404, -3).apply {
             blurBehindRadius = 1
-            if (android.os.Build.VERSION.SDK_INT >= 28) layoutInDisplayCutoutMode = 1
+            layoutInDisplayCutoutMode = 1
             dimAmount = 0f
             gravity = Gravity.TOP or Gravity.START
         }
-        try { w.addView(root, lp); pop = root; EnergyRing.bringToFront() } catch (e: Exception) {}
+        try { w.addView(root, lp); pop = root; EnergyRing.bringToFront() } catch (_: Exception) {}
         root.post { blur(root, lp, 1, 500); root.animate().alpha(1f).setInterpolator(ip).setDuration(500).start() }
     }
 
     private fun createGrid(root: FrameLayout): GridLayout {
         val grid = GridLayout(c).apply { columnCount = 4; layoutParams = FrameLayout.LayoutParams(-2, -2, 17); clipChildren = false }
         val (cOn, cOff) = Color.rgb(33, 124, 255) to Color.argb(120, 0, 0, 0)
-        fun isDim() = try { Settings.Secure.getInt(c.contentResolver, "reduce_bright_colors_activated") == 1 } catch (e: Exception) { false }
+        fun isDim() = try { Settings.Secure.getInt(c.contentResolver, "reduce_bright_colors_activated") == 1 } catch (_: Exception) { false }
         fun anim(v: View, on: Boolean) = ValueAnimator.ofArgb(if (on) cOff else cOn, if (on) cOn else cOff).apply {
             duration = 200; addUpdateListener { (v.background as GradientDrawable).setColor(it.animatedValue as Int) }
         }.start()
 
-        val items = listOf<Pair<Int, () -> Unit>>(
+        val items = listOf(
             R.drawable.scan to { exec("com.google.android.gms", "com.google.android.gms.mlkit.barcode.v2.ScannerActivity"); close(root) },
             R.drawable.lens to { exec("com.google.android.googlequicksearchbox", "com.google.android.apps.search.lens.LensExportedActivity", true); close(root) },
             R.drawable.quickshare to { exec("com.google.android.gms", "com.google.android.gms.nearby.sharing.ReceiveUsingSamsungQrCodeMainActivity", action = Intent.ACTION_MAIN); close(root) },
@@ -194,7 +195,8 @@ class Popup(private val c: Context) {
     }.start()
 
     private fun exec(pkg: String, cls: String, hist: Boolean = false, action: String? = null) = runCatching {
-        c.startActivity(Intent().setClassName(pkg, cls).addFlags(268435456).apply { if (hist) addFlags(1048576); if (action != null) setAction(action) })
+        c.startActivity(Intent().setClassName(pkg, cls).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).apply { if (hist) addFlags(
+            Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY); if (action != null) setAction(action) })
     }
 
     fun destroy() { bar?.let { if (it.isAttachedToWindow) w.removeView(it) }; pop?.let { if (it.isAttachedToWindow) w.removeView(it) } }
@@ -221,7 +223,7 @@ class Popup(private val c: Context) {
                 val lp = layoutParams as WindowManager.LayoutParams
                 when (e.action) {
                     0 -> { x = e.rawX; y = e.rawY; ix = lp.x; iy = lp.y; h.postDelayed(longClick, 500) }
-                    2 -> if (Math.abs(e.rawX - x) > 10 || Math.abs(e.rawY - y) > 10) {
+                    2 -> if (abs(e.rawX - x) > 10 || abs(e.rawY - y) > 10) {
                         h.removeCallbacks(longClick)
                         lp.x = ix + (e.rawX - x).toInt(); lp.y = iy - (e.rawY - y).toInt()
                         runCatching { w.updateViewLayout(this, lp) }
@@ -231,7 +233,7 @@ class Popup(private val c: Context) {
             }
         }
         val lp = WindowManager.LayoutParams(-2, -2, 2038, 520, -3).apply {
-            gravity = 81; y = 20; if (android.os.Build.VERSION.SDK_INT >= 28) layoutInDisplayCutoutMode = 1
+            gravity = 81; y = 20; layoutInDisplayCutoutMode = 1
         }
         runCatching { w.addView(v, lp); currentOverlay = v }
     }

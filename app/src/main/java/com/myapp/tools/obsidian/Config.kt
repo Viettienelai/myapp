@@ -10,7 +10,6 @@ object Config {
     fun getLocalPath(ctx: Context) = ctx.prefs.getString("local_path", "/storage/emulated/0/Documents/Obsidian")!!
 
     fun saveRemotePath(ctx: Context, path: String) = ctx.prefs.edit { putString("remote_path", path) }
-    fun getRemotePath(ctx: Context) = ctx.prefs.getString("remote_path", "gdrive:")!!
 
     fun saveRemoteDisplayName(ctx: Context, name: String) = ctx.prefs.edit { putString("remote_name", name) }
     fun getRemoteDisplayName(ctx: Context) = ctx.prefs.getString("remote_name", "Mặc định (Root)")!!

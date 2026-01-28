@@ -35,7 +35,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
                 .append("token = {\"access_token\":\"$token\",\"token_type\":\"Bearer\",\"expiry\":\"2030-01-01T00:00:00+07:00\"}\n")
             if (!rootId.isNullOrEmpty()) conf.append("root_folder_id = $rootId\n")
             File(applicationContext.filesDir, "rclone.conf").writeText(conf.toString())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             EnergyRing.hide()
             return Result.failure()
         }
@@ -119,10 +119,8 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
     private suspend fun setForegroundSafe() {
         val channelId = "obsidian_sync_silent"
         val mgr = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= 26) {
-            val chan = NotificationChannel(channelId, "Obsidian Background", NotificationManager.IMPORTANCE_LOW)
-            mgr.createNotificationChannel(chan)
-        }
+        val chan = NotificationChannel(channelId, "Obsidian Background", NotificationManager.IMPORTANCE_LOW)
+        mgr.createNotificationChannel(chan)
         val notif = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.drawable.obsidian1)
             .setContentTitle("Obsidian Sync")
@@ -130,8 +128,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
 
         val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
         try {
-            if (Build.VERSION.SDK_INT >= 29) setForeground(ForegroundInfo(101, notif, type))
-            else setForeground(ForegroundInfo(101, notif))
+            setForeground(ForegroundInfo(101, notif, type))
         } catch (_: Exception) {}
     }
 

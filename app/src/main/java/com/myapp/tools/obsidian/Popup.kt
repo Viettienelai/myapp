@@ -18,7 +18,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.myapp.R
-import java.io.File
 
 class Popup(
     private val c: Context,

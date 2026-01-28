@@ -21,13 +21,13 @@ class VolumeBar(private val ctx: Context) {
     private val layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
     fun setup() {
-        addBar(410, 290, Color.TRANSPARENT) {
+        addBar(410, 290) {
             am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun addBar(yPos: Int, h: Int, color: Int, act: () -> Unit) {
+    private fun addBar(yPos: Int, h: Int, act: () -> Unit) {
         val p = WindowManager.LayoutParams(
             60, h, layoutType, // 60 là chiều rộng vùng cảm ứng
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or

@@ -40,7 +40,7 @@ class Sidebar : Service() {
     }
 
     override fun onDestroy() {
-        try { unregisterReceiver(screenReceiver) } catch (e: Exception) {}
+        try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         popupManager.destroy()
         volumeManager.destroy()
         super.onDestroy()
