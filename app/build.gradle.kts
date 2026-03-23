@@ -93,4 +93,5 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
 
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")
+    implementation("androidx.dynamicanimation:dynamicanimation:1.0.0")
 }

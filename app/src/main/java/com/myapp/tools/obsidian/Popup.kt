@@ -25,18 +25,13 @@ class Popup(
     private val onClose: () -> Unit
 ) {
 
-    fun checkAndShowSync(grid: View) {
-        // SỬA ĐỔI QUAN TRỌNG TẠI ĐÂY:
-        // Không kiểm tra file rclone.conf nữa vì SyncWorker sẽ tự tạo nó khi chạy lần đầu.
-        // Chỉ cần kiểm tra xem user đã đăng nhập email và đã chọn thư mục (nếu cần) hay chưa.
+    // Hàm chuyển đổi px sang dp
+    private fun dp(px: Int): Int = (c.resources.displayMetrics.density * px).toInt()
 
+    fun checkAndShowSync(grid: View) {
         val hasEmail = Config.getUserEmail(c) != null
 
-        // (Tùy chọn) Nếu bạn bắt buộc user phải chọn folder đích thì thêm check này:
-        // val hasRootFolder = Config.getRootFolderId(c) != null
-        // val isReady = hasEmail && hasRootFolder
-
-        if (hasEmail) { // Hoặc if (isReady)
+        if (hasEmail) {
             grid.animate().alpha(0f).scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction {
                 root.removeView(grid)
                 showSyncSlider()
@@ -55,16 +50,22 @@ class Popup(
         val container = LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER)
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
             alpha = 0f
             scaleX = 0.8f
             scaleY = 0.8f
-            animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(300).start()
+            animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(200).start()
         }
 
         // 1. NÚT SETTING
         val settingsBtn = FrameLayout(c).apply {
-            layoutParams = LinearLayout.LayoutParams(180, 180).apply { bottomMargin = 150 }
+            layoutParams = LinearLayout.LayoutParams(dp(48), dp(48)).apply {
+                bottomMargin = dp(8)
+            }
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(Color.argb(120, 0, 0, 0))
@@ -72,10 +73,12 @@ class Popup(
             addView(ImageView(c).apply {
                 setImageResource(R.drawable.setting)
                 setColorFilter(Color.WHITE)
-                layoutParams = FrameLayout.LayoutParams(80, 80, Gravity.CENTER)
+                layoutParams = FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER)
             })
             setOnClickListener {
-                val intent = Intent(c, SetupActivity::class.java).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                val intent = Intent(c, SetupActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
                 c.startActivity(intent)
                 onClose()
             }
@@ -83,27 +86,43 @@ class Popup(
         container.addView(settingsBtn)
 
         // 2. SLIDER SYNC
-        val sliderW = 300; val sliderH = 1320; val thumbSize = 247
+        val sliderW = dp(48)
+        val sliderH = dp(250)
+        val thumbSize = dp(40)
         val padding = (sliderW - thumbSize) / 2
-        // Vị trí Y bắt đầu của thumb (chính giữa slider)
         val centerY = (sliderH - thumbSize) / 2
 
         val slider = FrameLayout(c).apply {
             layoutParams = LinearLayout.LayoutParams(sliderW, sliderH)
-            background = GradientDrawable().apply { shape = GradientDrawable.RECTANGLE; cornerRadius = 150f; setColor(Color.argb(60, 255, 255, 255)) }
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 150f // Corner radius thường để f trực tiếp hoặc dùng dp nếu muốn chính xác tuyệt đối
+                setColor(Color.argb(60, 255, 255, 255))
+            }
         }
-        slider.addView(ImageView(c).apply { setImageResource(R.drawable.drive); layoutParams = FrameLayout.LayoutParams(120, 120, 49).apply { topMargin = 75 } })
-        slider.addView(ImageView(c).apply { setImageResource(R.drawable.phone); layoutParams = FrameLayout.LayoutParams(150, 150, 81).apply { bottomMargin = 75 } })
 
-        // --- THÊM: 6 Dấu chấm hiệu ứng ---
-        val dotSize = 16
-        val dotGap = 50
-        val dotStartDist = 100
+        slider.addView(ImageView(c).apply {
+            setImageResource(R.drawable.drive)
+            layoutParams = FrameLayout.LayoutParams(dp(20), dp(20), 49).apply {
+                topMargin = dp(14)
+            }
+        })
+
+        slider.addView(ImageView(c).apply {
+            setImageResource(R.drawable.phone)
+            layoutParams = FrameLayout.LayoutParams(dp(25), dp(25), 81).apply {
+                bottomMargin = dp(13)
+            }
+        })
+
+        // --- 6 Dấu chấm hiệu ứng ---
+        val dotSize = dp(3)
+        val dotGap = dp(10)
+        val dotStartDist = dp(21)
 
         for (i in 0 until 3) {
-            val delay = (i * 150).toLong() // Gần nhất delay = 0, xa nhất delay lớn
+            val delay = (i * 150).toLong()
 
-            // Hàm tạo animation chung
             fun animateDot(v: View) {
                 ObjectAnimator.ofFloat(v, "alpha", 0.1f, 1f).apply {
                     duration = 500
@@ -114,42 +133,53 @@ class Popup(
                 }
             }
 
-            // Dấu chấm phía TRÊN (giữa Thumb và Drive)
+            // Dấu chấm phía TRÊN
             val topDot = View(c).apply {
                 layoutParams = FrameLayout.LayoutParams(dotSize, dotSize, Gravity.CENTER_HORIZONTAL).apply {
                     topMargin = centerY - dotStartDist - (i * dotGap) - dotSize
                 }
-                background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(Color.WHITE) }
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(Color.WHITE)
+                }
                 alpha = 0.3f
             }
             animateDot(topDot)
             slider.addView(topDot)
 
-            // Dấu chấm phía DƯỚI (giữa Thumb và Phone)
+            // Dấu chấm phía DƯỚI
             val botDot = View(c).apply {
                 layoutParams = FrameLayout.LayoutParams(dotSize, dotSize, Gravity.CENTER_HORIZONTAL).apply {
                     topMargin = centerY + thumbSize + dotStartDist + (i * dotGap)
                 }
-                background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(Color.WHITE) }
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(Color.WHITE)
+                }
                 alpha = 0.3f
             }
             animateDot(botDot)
             slider.addView(botDot)
         }
-        // ---------------------------------
 
         val thumb = FrameLayout(c).apply {
             layoutParams = FrameLayout.LayoutParams(thumbSize, thumbSize, 51)
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(Color.WHITE) }
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.WHITE)
+            }
             addView(ImageView(c).apply {
                 setImageResource(R.drawable.obsidian2)
-                layoutParams = FrameLayout.LayoutParams(135, 135, 17)
+                layoutParams = FrameLayout.LayoutParams(dp(20), dp(20), 17)
             })
             elevation = 10f
-            translationX = padding.toFloat(); translationY = centerY.toFloat()
+            translationX = padding.toFloat()
+            translationY = centerY.toFloat()
         }
 
-        val maxY = sliderH - thumbSize - padding; val minY = padding
+        val maxY = (sliderH - thumbSize - padding).toFloat()
+        val minY = padding.toFloat()
+        val activationThreshold = dp(2)
 
         thumb.setOnTouchListener(object : View.OnTouchListener {
             var dY = 0f
@@ -158,21 +188,23 @@ class Popup(
                     MotionEvent.ACTION_DOWN -> dY = v.translationY - event.rawY
                     MotionEvent.ACTION_MOVE -> {
                         var newY = event.rawY + dY
-                        if (newY < minY) newY = minY.toFloat()
-                        if (newY > maxY) newY = maxY.toFloat()
+                        if (newY < minY) newY = minY
+                        if (newY > maxY) newY = maxY
                         v.translationY = newY
                     }
                     MotionEvent.ACTION_UP -> {
-                        // --- ĐÃ SỬA: Đóng ngay lập tức khi thả tay ở vị trí kích hoạt ---
-                        if (v.translationY <= minY + 20) {
+                        if (v.translationY <= minY + activationThreshold) {
                             triggerSync(true)
-                            onClose() // Đóng ngay
-                        } else if (v.translationY >= maxY - 20) {
+                            onClose()
+                        } else if (v.translationY >= maxY - activationThreshold) {
                             triggerSync(false)
-                            onClose() // Đóng ngay
+                            onClose()
                         } else {
-                            // Nếu chưa tới đích thì hồi vị trí cũ
-                            v.animate().translationY(centerY.toFloat()).setInterpolator(OvershootInterpolator()).setDuration(300).start()
+                            v.animate()
+                                .translationY(centerY.toFloat())
+                                .setInterpolator(OvershootInterpolator())
+                                .setDuration(300)
+                                .start()
                         }
                     }
                 }
@@ -187,7 +219,10 @@ class Popup(
 
     private fun triggerSync(isUpload: Boolean) {
         val wm = WorkManager.getInstance(c)
-        val req = OneTimeWorkRequestBuilder<SyncWorker>().setInputData(workDataOf("is_upload" to isUpload)).addTag("manual_sync").build()
+        val req = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setInputData(workDataOf("is_upload" to isUpload))
+            .addTag("manual_sync")
+            .build()
         wm.enqueue(req)
     }
 }
