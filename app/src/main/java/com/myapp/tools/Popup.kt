@@ -123,7 +123,7 @@ class Popup(private val c: Context) {
 
             addView(TextView(c).apply {
                 val intent = c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-                text = "${(intent?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10f}°C"
+                text = "${(intent?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10f}°"
                 setTextColor(-1)
                 textSize = 13f
                 typeface = Typeface.DEFAULT_BOLD
@@ -131,10 +131,14 @@ class Popup(private val c: Context) {
                 translationY = 50f
                 animate().translationY(0f).setInterpolator(ip).setDuration(800).start()
 
-                setOnLongClickListener {
+                setOnClickListener {
                     close(root)
-                    showTempOverlay(text.toString())
-                    true
+                    if (currentOverlay != null) {
+                        runCatching { w.removeView(currentOverlay) }
+                        currentOverlay = null
+                    } else {
+                        showTempOverlay(text.toString())
+                    }
                 }
             })
         }
@@ -215,21 +219,12 @@ class Popup(private val c: Context) {
             override fun onDetachedFromWindow() { super.onDetachedFromWindow(); h.removeCallbacks(run) }
         }.apply {
             text = t; setTextColor(-1); textSize = 9f; typeface = Typeface.DEFAULT_BOLD
+            setPadding(5,0,5,0)
             setShadowLayer(5f, 0f, 0f, -16777216)
-            var x = 0f; var y = 0f; var ix = 0; var iy = 0
-            val longClick = Runnable { (c.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator).vibrate(50); runCatching { w.removeView(this) }; currentOverlay = null }
-
-            setOnTouchListener { _, e ->
-                val lp = layoutParams as WindowManager.LayoutParams
-                when (e.action) {
-                    0 -> { x = e.rawX; y = e.rawY; ix = lp.x; iy = lp.y; h.postDelayed(longClick, 500) }
-                    2 -> if (abs(e.rawX - x) > 10 || abs(e.rawY - y) > 10) {
-                        h.removeCallbacks(longClick)
-                        lp.x = ix + (e.rawX - x).toInt(); lp.y = iy - (e.rawY - y).toInt()
-                        runCatching { w.updateViewLayout(this, lp) }
-                    }
-                    else -> h.removeCallbacks(longClick)
-                }; true
+            
+            setOnClickListener {
+                runCatching { w.removeView(this) }
+                currentOverlay = null
             }
         }
         val lp = WindowManager.LayoutParams(-2, -2, 2038, 520, -3).apply {
