@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -130,14 +131,18 @@ class SetupActivity : ComponentActivity() {
 
         if (showDrivePicker && _driveService.value != null) {
             DrivePicker(_driveService.value!!) { item ->
-                showDrivePicker = false
                 if (item != null) {
-                    // --- THAY ĐỔI QUAN TRỌNG: Lưu vào AppConfig ---
+                    // Lưu vào Config
                     Config.saveRemotePath(ctx, "gdrive:")
                     Config.saveRemoteDisplayName(ctx, item.name)
-                    Config.saveRootFolderId(ctx, item.id) // Lưu ID vào Prefs
+                    Config.saveRootFolderId(ctx, item.id)
+
+                    // Cập nhật state để UI đổi tên ngay lập tức
                     remoteName = item.name
                 }
+
+                // --- DÒNG QUAN TRỌNG NHẤT: Đóng popup ---
+                showDrivePicker = false
             }
         }
 
@@ -196,7 +201,7 @@ fun DrivePicker(service: Drive, onResult: (DriveItem?) -> Unit) {
         Card(Modifier.fillMaxWidth().height(500.dp), backgroundColor = Color(0xFF1E1E1E)) {
             Column(Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (stack.size > 1) IconButton({ stack = stack.dropLast(1) }) { Icon(Icons.Default.ArrowBack, null, tint = Color.White) }
+                    if (stack.size > 1) IconButton({ stack = stack.dropLast(1) }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White) }
                     Text(stack.last().name, style = MaterialTheme.typography.h6, color = Color.White)
                 }
                 LazyColumn(Modifier.weight(1f)) {

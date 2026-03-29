@@ -14,6 +14,9 @@ import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.dynamicanimation.animation.DynamicAnimation
+import androidx.dynamicanimation.animation.SpringAnimation
+import androidx.dynamicanimation.animation.SpringForce
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -55,10 +58,31 @@ class Popup(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER
             )
+            // Đặt scale khởi tạo nhỏ hơn để hiệu ứng bung Spring rõ ràng hơn
             alpha = 0f
-            scaleX = 0.8f
-            scaleY = 0.8f
-            animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(200).start()
+            scaleX = 0.6f
+            scaleY = 0.6f
+        }
+
+        // Fade in độ mờ mượt mà
+        container.animate().alpha(1f).setDuration(200).start()
+
+        // Spring Animation bung lụa cho Scale X
+        SpringAnimation(container, DynamicAnimation.SCALE_X).apply {
+            spring = SpringForce(1f).apply {
+                dampingRatio = 0.6f
+                stiffness = SpringForce.STIFFNESS_LOW
+            }
+            start()
+        }
+
+        // Spring Animation bung lụa cho Scale Y
+        SpringAnimation(container, DynamicAnimation.SCALE_Y).apply {
+            spring = SpringForce(1f).apply {
+                dampingRatio = 0.6f
+                stiffness = SpringForce.STIFFNESS_LOW
+            }
+            start()
         }
 
         // 1. NÚT SETTING

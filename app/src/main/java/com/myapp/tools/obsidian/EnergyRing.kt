@@ -29,13 +29,14 @@ object EnergyRing {
     private val handler = Handler(Looper.getMainLooper())
     private var layoutParams: WindowManager.LayoutParams? = null
 
-    // Bảng màu
-    private const val COLOR_SYNC = 0xFFA079FF.toInt()     // Tím (Syncing)
-    private const val COLOR_SUCCESS = 0xFF24B232.toInt()  // Xanh lá (Done)
+    // Hàm quy đổi nội bộ
+    private fun dp(px: Int, ctx: Context): Int = (ctx.resources.displayMetrics.density * px).toInt()
 
-    // Scanner Colors
-    private const val SCANNER_COLOR_1 = 0xFFA079FF.toInt() // Tím
-    private const val SCANNER_COLOR_2 = 0xFF24B232.toInt() // Xanh lá
+    private const val COLOR_SYNC = 0xFFA079FF.toInt()
+    private const val COLOR_SUCCESS = 0xFF24B232.toInt()
+
+    private const val SCANNER_COLOR_1 = 0xFFA079FF.toInt()
+    private const val SCANNER_COLOR_2 = 0xFF24B232.toInt()
 
     fun show(ctx: Context) {
         handler.post {
@@ -61,7 +62,7 @@ object EnergyRing {
                 PixelFormat.TRANSLUCENT
             ).apply {
                 gravity = Gravity.TOP
-                height = 300
+                height = dp(100, context) // 300px -> ~100dp
                 layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
 
@@ -74,12 +75,10 @@ object EnergyRing {
         }
     }
 
-    // --- NEW METHOD: Đưa Ring lên trên cùng ---
     fun bringToFront() {
         handler.post {
             if (view != null && view?.isAttachedToWindow == true && wm != null) {
                 try {
-                    // Gỡ ra và thêm lại để reset Z-Order lên cao nhất
                     wm?.removeView(view)
                     wm?.addView(view, layoutParams)
                 } catch (e: Exception) {
@@ -115,27 +114,18 @@ object EnergyRing {
             strokeWidth = 10f
         }
 
-        // --- CẤU HÌNH ---
         private var progress = 0f
-        private var targetRadiusOffset = 8f  // Kích thước chuẩn
+        private var targetRadiusOffset = 8f
 
-        // Hai bán kính riêng biệt
-        private var radiusScanner = 8f  // Scanner sẽ thu nhỏ dần
-        private var radiusRing = -20f   // Ring chính (bắt đầu ẩn)
+        private var radiusScanner = 8f
+        private var radiusRing = -20f
 
         private var currentColor = COLOR_SYNC
 
-        // --- TRẠNG THÁI ---
         private var state = State.SCANNING
 
-        enum class State {
-            SCANNING,   // Xoay 2 vòng tròn
-            TRANSITION, // Scanner thu nhỏ
-            SYNCING,    // Chạy % Ring
-            SUCCESS     // Biến hình xanh lá
-        }
+        enum class State { SCANNING, TRANSITION, SYNCING, SUCCESS }
 
-        // --- ANIMATORS ---
         private var scanAngle1 = 0f
         private var scanAngle2 = 0f
         private var scannerRotationAnim: ValueAnimator? = null
@@ -146,7 +136,6 @@ object EnergyRing {
             radiusScanner = targetRadiusOffset
             radiusRing = -20f
 
-            // Animation xoay vô tận (Nhanh: 720 độ/2s)
             scannerRotationAnim = ValueAnimator.ofFloat(0f, 720f).apply {
                 duration = 2000
                 repeatCount = ValueAnimator.INFINITE
@@ -164,23 +153,16 @@ object EnergyRing {
         fun updateProgress(p: Int) {
             if (state == State.SUCCESS) return
 
-            // --- KÍCH HOẠT CHUYỂN CẢNH ---
             if (state == State.SCANNING) {
                 state = State.TRANSITION
-
-                // Ring chính: Hiện ra NGAY LẬP TỨC tại vị trí chuẩn (không scale từ 0 nữa)
                 radiusRing = targetRadiusOffset
 
-                // Scanner: Thu nhỏ dần từ 8 -> 0 rồi biến mất
                 val shrinkScannerAnim = ValueAnimator.ofFloat(0f, 1f).apply {
                     duration = 300
                     interpolator = DecelerateInterpolator()
                     addUpdateListener {
                         val fraction = it.animatedValue as Float
-
-                        // Thu nhỏ bán kính Scanner
                         radiusScanner = targetRadiusOffset * (1 - fraction)
-
                         invalidate()
                     }
                     addListener(object : AnimatorListenerAdapter() {
@@ -195,7 +177,6 @@ object EnergyRing {
                 shrinkScannerAnim.start()
             }
 
-            // --- UPDATE PROGRESS ---
             val target = p.toFloat()
             if (progressAnim?.isRunning == true) progressAnim?.cancel()
 
@@ -215,26 +196,21 @@ object EnergyRing {
             progressAnim?.cancel()
 
             state = State.SUCCESS
-            paint.style = Paint.Style.FILL // Đặc ruột
+            paint.style = Paint.Style.FILL
             progress = 100f
-
-            // Đảm bảo Ring ở kích thước chuẩn trước khi phình to
             radiusRing = targetRadiusOffset
 
-            // 1. Đổi màu Tím -> Xanh
             val colorAnim = ValueAnimator.ofObject(ArgbEvaluator(), COLOR_SYNC, COLOR_SUCCESS).apply {
                 duration = 700
                 addUpdateListener { currentColor = it.animatedValue as Int; invalidate() }
             }
 
-            // 2. Phình to (Expand) -> SỬA THÀNH 25f
             val expandAnim = ValueAnimator.ofFloat(radiusRing, 25f).apply {
                 duration = 700
                 interpolator = OvershootInterpolator(2.5f)
                 addUpdateListener { radiusRing = it.animatedValue as Float; invalidate() }
             }
 
-            // 3. Thu nhỏ biến mất (Shrink)
             val shrinkAnim = ValueAnimator.ofFloat(25f, -100f).apply {
                 duration = 400
                 startDelay = 700
@@ -269,32 +245,25 @@ object EnergyRing {
                 baseRadius = min(it.width(), it.height()) / 2f
             }
 
-            // --- 1. VẼ SCANNER (Chỉ vẽ khi đang Scan hoặc đang Thu nhỏ) ---
             if (state == State.SCANNING || state == State.TRANSITION) {
                 val rScan = baseRadius + radiusScanner
-                // Chỉ vẽ nếu bán kính Scanner còn dương
                 if (radiusScanner > 0.5f) {
                     val rectScan = RectF(cx - rScan, cy - rScan, cx + rScan, cy + rScan)
                     paint.style = Paint.Style.STROKE
 
-                    // Cung 1
                     paint.color = SCANNER_COLOR_1
                     canvas.drawArc(rectScan, scanAngle1, 100f, false, paint)
 
-                    // Cung 2
                     paint.color = SCANNER_COLOR_2
-                    // Opacity gốc thấp hơn kết hợp với Fade out
                     canvas.drawArc(rectScan, scanAngle2 + 180f, 80f, false, paint)
                 }
             }
 
-            // --- 2. VẼ MAIN RING ---
-            // Vẽ khi đã qua giai đoạn Scan (radiusRing > -10) hoặc đang Success
             if (radiusRing > -10 || state == State.SUCCESS) {
                 val rRing = baseRadius + radiusRing
                 if (rRing > 0) {
                     paint.color = currentColor
-                    paint.alpha = 255 // Ring chính luôn rõ nét
+                    paint.alpha = 255
 
                     if (state == State.SUCCESS) {
                         paint.style = Paint.Style.FILL

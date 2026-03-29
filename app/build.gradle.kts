@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.myapp"
-        minSdk = 26
+        minSdk = 30
         targetSdk = 34
         versionCode = 3 // Tăng version code để đảm bảo cập nhật
         versionName = "1.1"

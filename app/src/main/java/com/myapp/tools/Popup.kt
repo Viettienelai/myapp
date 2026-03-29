@@ -16,7 +16,7 @@ import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import com.myapp.R
 import com.myapp.tools.obsidian.EnergyRing
-import com.myapp.tools.obsidian.Popup
+import com.myapp.tools.obsidian.Popup // Nếu trùng tên, cần check lại import package nhé
 import kotlin.math.abs
 
 @Suppress("DEPRECATION")
@@ -36,9 +36,10 @@ class Popup(private val c: Context) {
     fun setup() {
         destroy()
 
-        val lp = WindowManager.LayoutParams(60, 300, 2038, 776, -3).apply {
+        // 60px -> 20dp | 300px -> 100dp | 710px -> 236dp
+        val lp = WindowManager.LayoutParams(dp(20), dp(100), 2038, 776, -3).apply {
             gravity = Gravity.TOP or Gravity.END
-            y = 710
+            y = dp(236)
             windowAnimations = 0
         }
 
@@ -58,11 +59,11 @@ class Popup(private val c: Context) {
                     MotionEvent.ACTION_MOVE -> {
                         val dx = e.rawX - sx; val dy = e.rawY - sy
                         if (!triggered) {
-                            if (dx < -30) {
+                            if (dx < -dp(10)) { // 30px -> 10dp
                                 triggered = true
                                 show()
                             }
-                            else if (dy > 50 && dy > abs(dx)) {
+                            else if (dy > dp(16) && dy > abs(dx)) { // 50px -> 16dp
                                 triggered = true
                                 (c.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator).vibrate(50)
                                 c.startActivity(Intent(c, CtsActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -114,7 +115,6 @@ class Popup(private val c: Context) {
     private fun show() {
         if (pop != null) return
 
-        // Wrapper bọc ngoài để dự phòng không gian cho hiệu ứng Scale nhún nảy (chống Clipping)
         val windowContainer = FrameLayout(c).apply {
             clipChildren = false
             clipToPadding = false
@@ -127,6 +127,7 @@ class Popup(private val c: Context) {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(60).toFloat()
                 setColor(Color.rgb(40, 40, 40))
+                setStroke(dp(1), Color.argb(50,200, 200, 200))
             }
 
             outlineProvider = ViewOutlineProvider.BACKGROUND
@@ -134,11 +135,9 @@ class Popup(private val c: Context) {
             clipChildren = false
             isClickable = true
 
-            // Đặt kích thước siêu nhỏ lúc khởi tạo chờ Scale
             scaleX = 0.4f
             scaleY = 0.2f
 
-            setPadding(dp(8), dp(8), dp(8), dp(8))
             systemUiVisibility = 5894
 
             val container = LinearLayout(c).apply {
@@ -155,8 +154,7 @@ class Popup(private val c: Context) {
                 gravity = Gravity.CENTER
                 typeface = Typeface.DEFAULT_BOLD
                 layoutParams = LinearLayout.LayoutParams(-1, -2).apply {
-                    topMargin = dp(10)
-                    bottomMargin = dp(8)
+                    setMargins(dp(8), dp(18), dp(8), dp(8))
                 }
 
                 setOnClickListener {
@@ -184,7 +182,6 @@ class Popup(private val c: Context) {
             addView(container)
         }
 
-        // Bắt sự kiện bấm ra ngoài (Out bounds) hoặc bấm vùng viền vô hình
         windowContainer.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_OUTSIDE) {
                 close()
@@ -201,7 +198,6 @@ class Popup(private val c: Context) {
             false
         }
 
-        // Đặt Toolbar vào trong hộp dự phòng kích thước
         root.layoutParams = FrameLayout.LayoutParams(dp(64), FrameLayout.LayoutParams.WRAP_CONTENT)
         windowContainer.addView(root)
 
@@ -210,15 +206,11 @@ class Popup(private val c: Context) {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 
-        // Gravity.END: x = khoảng cách từ viền phải cửa sổ tới viền phải màn hình
-        // Do Window đã cộng thêm 20dp padding, để toolbar cách mép phải màn hình 12dp: x = 12 - 20 = -8dp
         val onScreenX = -dp(5).toFloat()
-        val offScreenX = -dp(70).toFloat() // Xa tít mép bên ngoài
+        val offScreenX = -dp(70).toFloat()
 
         val lp = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, 2038, flags, PixelFormat.TRANSLUCENT).apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             gravity = Gravity.CENTER_VERTICAL or Gravity.END
             x = offScreenX.toInt()
             windowAnimations = 0
@@ -229,21 +221,19 @@ class Popup(private val c: Context) {
             pop = windowContainer
             EnergyRing.bringToFront()
 
-            // 1. Trượt (Translate) vút vào NGAY LẬP TỨC
             val springAnimX = SpringAnimation(FloatValueHolder(offScreenX))
             springAnimX.spring = SpringForce(onScreenX).apply {
                 dampingRatio = 0.7f
                 stiffness = 200f
             }
-            springAnimX.addUpdateListener(DynamicAnimation.OnAnimationUpdateListener { _, value, _ ->
+            springAnimX.addUpdateListener { _, value, _ ->
                 if (windowContainer.isAttachedToWindow) {
                     lp.x = value.toInt()
                     runCatching { w.updateViewLayout(windowContainer, lp) }
                 }
-            })
+            }
             springAnimX.start()
 
-            // 2. Scale bung lụa (DELAY 100MS so với di chuyển)
             windowContainer.postDelayed({
                 SpringAnimation(root, DynamicAnimation.SCALE_X).apply {
                     spring = SpringForce(1f).apply { dampingRatio = 0.7f; stiffness = SpringForce.STIFFNESS_LOW }
@@ -262,6 +252,7 @@ class Popup(private val c: Context) {
         val list = LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(-1, -2)
+            gravity = Gravity.CENTER_HORIZONTAL
             clipChildren = false
         }
         val cOn = Color.rgb(33, 124, 255)
@@ -288,33 +279,35 @@ class Popup(private val c: Context) {
                 val currentHeight = root.height
                 val targetHeight = dp(322)
 
-                // Kiểm tra nếu đang khác kích thước đích thì mới chạy hiệu ứng thu đổi chiều cao
                 if (currentHeight != targetHeight && currentHeight > 0) {
                     tempText.animate().alpha(0f).setDuration(300).start()
                     divider.animate().alpha(0f).setDuration(300).start()
 
-                    // Diễn hoạt thẳng chiều cao qua Frame-by-frame giúp WindowManager cập nhật đều đặn, không bị clipping
-                    ValueAnimator.ofInt(currentHeight, targetHeight).apply {
-                        duration = 200
-                        addUpdateListener { anim ->
-                            rootLp.height = anim.animatedValue as Int
-                            root.layoutParams = rootLp
+                    val heightSpring = SpringAnimation(FloatValueHolder(currentHeight.toFloat()))
+                    heightSpring.spring = SpringForce(targetHeight.toFloat()).apply {
+                        dampingRatio = 0.6f
+                        stiffness = SpringForce.STIFFNESS_LOW
+                    }
 
-                            if (windowContainer?.isAttachedToWindow == true) {
-                                runCatching { w.updateViewLayout(windowContainer, windowContainer.layoutParams) }
-                            }
+                    heightSpring.addUpdateListener { _, value, _ ->
+                        rootLp.height = value.toInt()
+                        root.layoutParams = rootLp
+
+                        if (windowContainer?.isAttachedToWindow == true) {
+                            runCatching { w.updateViewLayout(windowContainer, windowContainer.layoutParams) }
                         }
-                    }.start()
+                    }
+                    heightSpring.start()
                 }
 
-                // Gọi checkAndShowSync
-                Popup(c, root) { close() }.checkAndShowSync(list)
+                // Chú ý check lại class Popup của Obsidian nhé
+                com.myapp.tools.obsidian.Popup(c, root) { close() }.checkAndShowSync(list)
             }
         )
 
-        items.forEachIndexed { index, (ic, fn) ->
+        items.forEachIndexed { _, (ic, fn) ->
             list.addView(FrameLayout(c).apply {
-                val bMargin = if (index == items.size - 1) 0 else dp(8)
+                val bMargin = dp(8)
                 layoutParams = LinearLayout.LayoutParams(dp(48), dp(48)).apply { setMargins(0, 0, 0, bMargin) }
 
                 val isOn = if (ic == R.drawable.screenon) p.getBoolean("on", false) else if (ic == R.drawable.dim) isDim() else false
@@ -335,7 +328,6 @@ class Popup(private val c: Context) {
         val lp = windowContainer.layoutParams as WindowManager.LayoutParams
         val offScreenX = -dp(200).toFloat()
 
-        // 1. Scale thu nhỏ về hạt bụi NGAY LẬP TỨC
         SpringAnimation(root, DynamicAnimation.SCALE_X).apply {
             spring = SpringForce(0.4f).apply { dampingRatio = 0.7f; stiffness = SpringForce.STIFFNESS_LOW }
             start()
@@ -345,7 +337,6 @@ class Popup(private val c: Context) {
             start()
         }
 
-        // 2. Trượt vút ra ngoài (DELAY 100MS so với Scale down)
         windowContainer.postDelayed({
             val springAnimX = SpringAnimation(FloatValueHolder(lp.x.toFloat()))
             springAnimX.spring = SpringForce(offScreenX).apply {
@@ -353,19 +344,18 @@ class Popup(private val c: Context) {
                 stiffness = SpringForce.STIFFNESS_LOW
             }
 
-            springAnimX.addUpdateListener(DynamicAnimation.OnAnimationUpdateListener { _, value, _ ->
+            springAnimX.addUpdateListener { _, value, _ ->
                 if (windowContainer.isAttachedToWindow) {
                     lp.x = value.toInt()
                     runCatching { w.updateViewLayout(windowContainer, lp) }
                 }
-            })
+            }
 
-            // Khi trượt khuất bóng rồi thì dọn rác
-            springAnimX.addEndListener(DynamicAnimation.OnAnimationEndListener { _, _, _, _ ->
+            springAnimX.addEndListener { _, _, _, _ ->
                 windowContainer.visibility = View.GONE
                 runCatching { w.removeView(windowContainer) }
                 pop = null
-            })
+            }
 
             springAnimX.start()
         }, 100)
@@ -403,10 +393,8 @@ class Popup(private val c: Context) {
         }
         val lp = WindowManager.LayoutParams(-2, -2, 2038, 520, -3).apply {
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            y = 20
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
+            y = dp(7) // 20px -> ~7dp
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
         runCatching { w.addView(v, lp); currentOverlay = v }
     }

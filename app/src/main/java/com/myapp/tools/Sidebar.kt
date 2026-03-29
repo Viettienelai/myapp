@@ -2,6 +2,7 @@ package com.myapp.tools
 
 import android.app.*
 import android.content.*
+import android.content.res.Configuration
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.myapp.R
@@ -37,6 +38,14 @@ class Sidebar : Service() {
             addAction(Intent.ACTION_USER_PRESENT)
         }
         registerReceiver(screenReceiver, filter)
+    }
+
+    // Bắt sự kiện khi bạn đổi Smallest Width (DPI) hoặc xoay màn hình
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Hệ thống sẽ vẽ lại UI với bộ thông số tỷ lệ dp mới lập tức
+        popupManager.setup()
+        volumeManager.setup()
     }
 
     override fun onDestroy() {

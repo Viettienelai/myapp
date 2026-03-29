@@ -20,56 +20,55 @@ class VolumeBar(private val ctx: Context) {
 
     private val layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
+    // Hàm quy đổi dp
+    private fun dp(px: Int): Int = (ctx.resources.displayMetrics.density * px).toInt()
+
     fun setup() {
-        addBar(410, 290) {
+        destroy() // Rất quan trọng: Gỡ view cũ khi DPI thay đổi
+
+        // y: 410px -> ~136dp | h: 290px -> ~96dp
+        addBar(136, 96) {
             am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun addBar(yPos: Int, h: Int, act: () -> Unit) {
+    private fun addBar(yPosDp: Int, hDp: Int, act: () -> Unit) {
         val p = WindowManager.LayoutParams(
-            60, h, layoutType, // 60 là chiều rộng vùng cảm ứng
+            dp(20), dp(hDp), layoutType, // 20dp thay vì fix cứng 60px
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             -3
         ).apply {
             gravity = Gravity.TOP or Gravity.END
-            y = yPos
+            y = dp(yPosDp)
             windowAnimations = 0
         }
 
         // 1. Vùng cảm ứng (Trong suốt)
         val v = FrameLayout(ctx).apply {
-            setBackgroundColor(Color.TRANSPARENT) // Giữ vùng này trong suốt
+            setBackgroundColor(Color.TRANSPARENT)
             setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
             // 2. Tạo Indicator (Thanh mờ nhỏ bên trong)
             val indicator = View(ctx).apply {
-                val density = ctx.resources.displayMetrics.density
-
-                // 1. Tùy chỉnh kích thước
-                val indicatorWidth = (4 * density).toInt()
+                val indicatorWidth = dp(4)
                 layoutParams = FrameLayout.LayoutParams(
                     indicatorWidth,
                     FrameLayout.LayoutParams.MATCH_PARENT
                 ).apply {
                     gravity = Gravity.END
-                    rightMargin = (3 * density).toInt()
+                    rightMargin = dp(3)
                 }
 
-                // 2. Tạo hình dạng bo tròn bằng GradientDrawable (thay thế setBackgroundColor)
                 background = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
-                    setColor(Color.argb(90, 120, 120, 120)) // Màu xám mờ
-
-                    // Bo tròn góc: lấy bán kính bằng 1/2 chiều rộng để tạo hình viên thuốc (capsule)
+                    setColor(Color.argb(90, 120, 120, 120))
                     cornerRadius = indicatorWidth / 2f
                 }
             }
 
-            // Thêm indicator vào trong vùng cảm ứng
             addView(indicator)
 
             addOnLayoutChangeListener { view, _, _, _, _, _, _, _, _ ->
@@ -91,21 +90,19 @@ class VolumeBar(private val ctx: Context) {
                     }
                     MotionEvent.ACTION_MOVE -> {
                         if (!d) {
-                            // Check vuốt ngang
-                            if (e.rawX - x0 < -20) {
+                            if (e.rawX - x0 < -dp(7)) { // 20px -> 7dp
                                 d = true
                                 isVertical = false
                                 act()
                             }
-                            // Check vuốt dọc
-                            else if (abs(e.rawY - y0) > 20) {
+                            else if (abs(e.rawY - y0) > dp(7)) {
                                 d = true
                                 isVertical = true
                                 y0 = e.rawY
                             }
                         } else if (isVertical) {
                             val diff = y0 - e.rawY
-                            val step = 40f
+                            val step = dp(13).toFloat() // 40px -> 13dp
                             if (abs(diff) > step) {
                                 val direction = if (diff > 0) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER
                                 am.adjustVolume(direction, AudioManager.FLAG_SHOW_UI)
@@ -114,17 +111,12 @@ class VolumeBar(private val ctx: Context) {
                         }
                     }
                     MotionEvent.ACTION_UP -> {
-                        // Nếu nhấc tay lên mà chưa detect được vuốt -> Là CLICK
                         if (!d) {
-                            // 1. Thêm flag NOT_TOUCHABLE: Chuyển sang chế độ "xuyên thấu"
-                            // Bar vẫn hiện nhưng không còn bắt sự kiện chạm nữa
                             p.flags = p.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                             wm.updateViewLayout(this, p)
 
-                            // 2. Sau 0.5s thì gỡ flag để nhận cảm ứng lại
                             postDelayed({
                                 p.flags = p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
-                                // Kiểm tra view còn tồn tại không trước khi update
                                 if (isAttachedToWindow) {
                                     wm.updateViewLayout(this, p)
                                 }

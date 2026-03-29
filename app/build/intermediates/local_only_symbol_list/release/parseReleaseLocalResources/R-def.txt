@@ -1,0 +1,14 @@
+R_DEF: Internal format may change without notice
+local
+drawable clean
+drawable dim
+drawable drive
+drawable lens
+drawable light
+drawable obsidian1
+drawable obsidian2
+drawable phone
+drawable quickshare
+drawable scan
+drawable screenon
+drawable setting
