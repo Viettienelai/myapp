@@ -58013,6 +58013,7 @@ com.myapp.tools.Popup:
     public static final com.myapp.tools.Popup$Companion Companion
     static void <clinit>()
     public static void refreshExclusion()
+    public static void setup()
 com.myapp.tools.Sidebar:
     public static final int $stable
     static void <clinit>()
@@ -58021,7 +58022,8 @@ com.myapp.tools.Sidebar:
 com.myapp.tools.VolumeBar:
     public static final int $stable
     static void <clinit>()
-    public final void destroy()
+    public static void destroy()
+    public static void setup()
 com.myapp.tools.obsidian.ComposableSingletons$SetupActivityKt:
     public static final com.myapp.tools.obsidian.ComposableSingletons$SetupActivityKt INSTANCE
     public static kotlin.jvm.functions.Function3 getLambda$-1635005443$app_release()

@@ -16,7 +16,7 @@ import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import com.myapp.R
 import com.myapp.tools.obsidian.EnergyRing
-import com.myapp.tools.obsidian.Popup // Nếu trùng tên, cần check lại import package nhé
+import com.myapp.tools.obsidian.Popup
 import kotlin.math.abs
 
 @Suppress("DEPRECATION")
@@ -36,7 +36,7 @@ class Popup(private val c: Context) {
     fun setup() {
         destroy()
 
-        // 60px -> 20dp | 300px -> 100dp | 710px -> 236dp
+        // 60px -> 20dp, 300px -> 100dp, 710px -> 236dp
         val lp = WindowManager.LayoutParams(dp(20), dp(100), 2038, 776, -3).apply {
             gravity = Gravity.TOP or Gravity.END
             y = dp(236)
@@ -300,8 +300,7 @@ class Popup(private val c: Context) {
                     heightSpring.start()
                 }
 
-                // Chú ý check lại class Popup của Obsidian nhé
-                com.myapp.tools.obsidian.Popup(c, root) { close() }.checkAndShowSync(list)
+                Popup(c, root) { close() }.checkAndShowSync(list)
             }
         )
 

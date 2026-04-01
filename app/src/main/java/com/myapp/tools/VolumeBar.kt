@@ -20,13 +20,10 @@ class VolumeBar(private val ctx: Context) {
 
     private val layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
-    // Hàm quy đổi dp
     private fun dp(px: Int): Int = (ctx.resources.displayMetrics.density * px).toInt()
 
     fun setup() {
-        destroy() // Rất quan trọng: Gỡ view cũ khi DPI thay đổi
-
-        // y: 410px -> ~136dp | h: 290px -> ~96dp
+        // Thay vì 410px, 290px thì truyền giá trị dp tương đương
         addBar(136, 96) {
             am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI)
         }
@@ -35,7 +32,7 @@ class VolumeBar(private val ctx: Context) {
     @SuppressLint("ClickableViewAccessibility")
     private fun addBar(yPosDp: Int, hDp: Int, act: () -> Unit) {
         val p = WindowManager.LayoutParams(
-            dp(20), dp(hDp), layoutType, // 20dp thay vì fix cứng 60px
+            dp(20), dp(hDp), layoutType, // 60px -> 20dp
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -46,12 +43,10 @@ class VolumeBar(private val ctx: Context) {
             windowAnimations = 0
         }
 
-        // 1. Vùng cảm ứng (Trong suốt)
         val v = FrameLayout(ctx).apply {
             setBackgroundColor(Color.TRANSPARENT)
             setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
-            // 2. Tạo Indicator (Thanh mờ nhỏ bên trong)
             val indicator = View(ctx).apply {
                 val indicatorWidth = dp(4)
                 layoutParams = FrameLayout.LayoutParams(

@@ -8,7 +8,7 @@ import android.provider.Settings
 import com.myapp.tools.Sidebar
 import androidx.core.net.toUri
 
-class MainActivity : Activity() {
+class  MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
