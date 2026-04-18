@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 #Fri Apr 17 23:43:02 GMT+07:00 2026
+=======
+#Sat Apr 18 00:42:55 GMT+07:00 2026
+>>>>>>> Stashed changes
 base.0=D\:\\Documents\\GitHub\\myapp\\app\\build\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
 path.0=classes.dex
 renamed.0=classes.dex
