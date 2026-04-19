@@ -296,7 +296,7 @@ class Popup(private val c: Context) {
                 Popup(c, root) { close() }.checkAndShowSync(list)
                 Unit
             },
-            android.R.drawable.ic_menu_camera to {
+            R.drawable.card to {
                 val windowContainer = pop as? FrameLayout
                 if (windowContainer != null) {
                     Gallery(c, w).expand(root, windowContainer)

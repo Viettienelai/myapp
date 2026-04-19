@@ -19,8 +19,8 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="outputName" value="svgviewer_output" />
-                            <entry key="sourceFile" value="D:\Downloads\svgviewer-output.svg" />
+                            <entry key="outputName" value="card" />
+                            <entry key="sourceFile" value="D:\Downloads\card.svg" />
                           </map>
                         </option>
                       </PersistentState>

@@ -36,6 +36,10 @@
         "source": "com.myapp-main-59:/drawable/screenon.xml"
     },
     {
+        "merged": "com.myapp-release-58:/drawable_card.xml.flat",
+        "source": "com.myapp-main-59:/drawable/card.xml"
+    },
+    {
         "merged": "com.myapp-release-58:/drawable_dim.xml.flat",
         "source": "com.myapp-main-59:/drawable/dim.xml"
     },

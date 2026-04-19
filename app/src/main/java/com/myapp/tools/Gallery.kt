@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.MotionEvent
@@ -25,12 +27,31 @@ import androidx.dynamicanimation.animation.SpringForce
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import java.util.concurrent.Executors
 import kotlin.math.abs
 
 @Suppress("DEPRECATION")
 class Gallery(private val c: Context, private val w: WindowManager) {
 
+    companion object {
+        private val executor = Executors.newFixedThreadPool(4)
+        private val handler = Handler(Looper.getMainLooper())
+    }
+
     private fun dp(px: Int): Int = (c.resources.displayMetrics.density * px).toInt()
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
+    }
 
     fun expand(root: FrameLayout, windowContainer: FrameLayout) {
         val lp = windowContainer.layoutParams as WindowManager.LayoutParams
@@ -137,22 +158,31 @@ class Gallery(private val c: Context, private val w: WindowManager) {
                         }
                     }
                     if (imageMap.containsKey(idx)) {
-                        runCatching {
-                            val inputStream = c.assets.open("gallery/${imageMap[idx]}")
-                            val bmp = BitmapFactory.decodeStream(inputStream)
-                            inputStream.close()
+                        val iv = ImageView(c).apply {
+                            layoutParams = FrameLayout.LayoutParams(-1, -1)
+                            scaleType = ImageView.ScaleType.CENTER_CROP
+                        }
+                        box.addView(iv)
+                        thumbViews[idx] = box
 
-                            val iv = ImageView(c).apply {
-                                layoutParams = FrameLayout.LayoutParams(-1, -1)
-                                scaleType = ImageView.ScaleType.CENTER_CROP
-                                setImageBitmap(bmp)
-                            }
-                            box.addView(iv)
-                            thumbViews[idx] = box
+                        executor.execute {
+                            runCatching {
+                                val assetPath = "gallery/${imageMap[idx]}"
+                                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                c.assets.open(assetPath).use { BitmapFactory.decodeStream(it, null, options) }
+                                options.inSampleSize = calculateInSampleSize(options, imgSizePx, imgSizePx)
+                                options.inJustDecodeBounds = false
+                                val bmp = c.assets.open(assetPath).use { BitmapFactory.decodeStream(it, null, options) }
 
-                            box.setOnClickListener {
-                                val clickedIndex = imageKeys.indexOf(idx)
-                                openFullscreen(clickedIndex, bmp, imageKeys, thumbViews, imageMap)
+                                handler.post {
+                                    iv.setImageBitmap(bmp)
+                                    iv.alpha = 0f
+                                    iv.animate().alpha(1f).setDuration(300).start()
+                                    box.setOnClickListener {
+                                        val clickedIndex = imageKeys.indexOf(idx)
+                                        openFullscreen(clickedIndex, bmp!!, imageKeys, thumbViews, imageMap)
+                                    }
+                                }
                             }
                         }
                     }
@@ -178,9 +208,21 @@ class Gallery(private val c: Context, private val w: WindowManager) {
         galleryContainer.animate().alpha(1f).setDuration(200).setStartDelay(100).start()
     }
 
-    // --- HÀM XỬ LÝ ẢNH FULLSCREEN VÀ CỬ CHỈ DRAG ---
     @SuppressLint("ClickableViewAccessibility")
     private fun openFullscreen(startIndex: Int, clickedBmp: Bitmap, imageKeys: List<Int>, thumbViews: Map<Int, View>, imageMap: Map<Int, String>) {
+
+        val screenW: Float
+        val screenH: Float
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = w.currentWindowMetrics.bounds
+            screenW = bounds.width().toFloat()
+            screenH = bounds.height().toFloat()
+        } else {
+            val metrics = DisplayMetrics()
+            w.defaultDisplay.getRealMetrics(metrics)
+            screenW = metrics.widthPixels.toFloat()
+            screenH = metrics.heightPixels.toFloat()
+        }
 
         val bgView = View(c).apply {
             setBackgroundColor(Color.BLACK)
@@ -209,38 +251,44 @@ class Gallery(private val c: Context, private val w: WindowManager) {
         }
 
         class PagerAdapter : RecyclerView.Adapter<PagerAdapter.VH>() {
-            inner class VH(val iv: ImageView) : RecyclerView.ViewHolder(iv)
+            inner class VH(val iv: ZoomableImageView) : RecyclerView.ViewHolder(iv)
+
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-                val iv = ImageView(c).apply {
+                val iv = ZoomableImageView(c).apply {
                     layoutParams = ViewGroup.LayoutParams(-1, -1)
                     scaleType = ImageView.ScaleType.FIT_CENTER
                 }
                 return VH(iv)
             }
+
             override fun onBindViewHolder(holder: VH, position: Int) {
-                runCatching {
-                    val key = imageKeys[position]
-                    val bmp = BitmapFactory.decodeStream(c.assets.open("gallery/${imageMap[key]}"))
-                    holder.iv.setImageBitmap(bmp)
+                val key = imageKeys[position]
+                val assetPath = "gallery/${imageMap[key]}"
+
+                holder.iv.setImageDrawable(null)
+                holder.iv.tag = assetPath
+                holder.iv.resetZoom()
+
+                executor.execute {
+                    runCatching {
+                        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        c.assets.open(assetPath).use { BitmapFactory.decodeStream(it, null, options) }
+                        options.inSampleSize = calculateInSampleSize(options, screenW.toInt(), screenH.toInt())
+                        options.inJustDecodeBounds = false
+                        val bmp = c.assets.open(assetPath).use { BitmapFactory.decodeStream(it, null, options) }
+
+                        handler.post {
+                            if (holder.iv.tag == assetPath) {
+                                holder.iv.setImageBitmap(bmp)
+                            }
+                        }
+                    }
                 }
             }
             override fun getItemCount() = imageKeys.size
         }
         viewPager.adapter = PagerAdapter()
         viewPager.setCurrentItem(startIndex, false)
-
-        val screenW: Float
-        val screenH: Float
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val bounds = w.currentWindowMetrics.bounds
-            screenW = bounds.width().toFloat()
-            screenH = bounds.height().toFloat()
-        } else {
-            val metrics = DisplayMetrics()
-            w.defaultDisplay.getRealMetrics(metrics)
-            screenW = metrics.widthPixels.toFloat()
-            screenH = metrics.heightPixels.toFloat()
-        }
 
         var isClosing = false
         var isVerticalDrag = false
@@ -264,6 +312,12 @@ class Gallery(private val c: Context, private val w: WindowManager) {
             override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
                 if (isClosing) return true
                 if (viewPager.visibility != View.VISIBLE) return true
+
+                val rv = viewPager.getChildAt(0) as? RecyclerView
+                val vh = rv?.findViewHolderForAdapterPosition(viewPager.currentItem) as? PagerAdapter.VH
+                if (vh != null && vh.iv.currentScale > 1f) {
+                    return false
+                }
 
                 when (ev.action) {
                     MotionEvent.ACTION_DOWN -> {
@@ -303,10 +357,16 @@ class Gallery(private val c: Context, private val w: WindowManager) {
                     sW = if (iW > 0) iW else 1f
                     sH = if (iH > 0) iH else 1f
                 } else {
-                    val currentBmp = BitmapFactory.decodeStream(c.assets.open("gallery/${imageMap[key]}"))
+                    val assetPath = "gallery/${imageMap[key]}"
+                    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    c.assets.open(assetPath).use { BitmapFactory.decodeStream(it, null, options) }
+                    options.inSampleSize = calculateInSampleSize(options, screenW.toInt(), screenH.toInt())
+                    options.inJustDecodeBounds = false
+                    val currentBmp = c.assets.open(assetPath).use { BitmapFactory.decodeStream(it, null, options) }
                     animImg.setImageBitmap(currentBmp)
-                    val iW = currentBmp.width.toFloat()
-                    val iH = currentBmp.height.toFloat()
+
+                    val iW = currentBmp?.width?.toFloat() ?: 1f
+                    val iH = currentBmp?.height?.toFloat() ?: 1f
                     sW = if (iW > 0) iW else 1f
                     sH = if (iH > 0) iH else 1f
                 }
@@ -388,8 +448,6 @@ class Gallery(private val c: Context, private val w: WindowManager) {
                 var finishedCount = 0
                 val totalAnims = 7
 
-                // Dùng 'this' một cách tường minh thông qua biến overlayView
-                // để tránh lỗi Unresolved reference khi trình biên dịch đọc mã
                 val overlayView = this
 
                 fun onFinished() {
@@ -503,7 +561,6 @@ class Gallery(private val c: Context, private val w: WindowManager) {
 
         runCatching { w.addView(fsContainer, fsLp) }
 
-        // --- 4. KÍCH HOẠT ZOOM-IN BAN ĐẦU ---
         val clickedThumb = thumbViews[imageKeys[startIndex]] ?: return
         val loc = IntArray(2)
         clickedThumb.getLocationOnScreen(loc)
@@ -527,8 +584,27 @@ class Gallery(private val c: Context, private val w: WindowManager) {
         boxfullimg.layoutParams = FrameLayout.LayoutParams(startW.toInt(), startH.toInt()).apply { gravity = Gravity.TOP or Gravity.START }
         boxfullimg.translationX = startX
         boxfullimg.translationY = startY
+
         animImg.setImageBitmap(clickedBmp)
         animImg.layoutParams = FrameLayout.LayoutParams(startImgW.toInt(), startImgH.toInt(), Gravity.CENTER)
+
+        val currentKey = imageKeys[startIndex]
+        val currentAssetPath = "gallery/${imageMap[currentKey]}"
+        executor.execute {
+            runCatching {
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                c.assets.open(currentAssetPath).use { BitmapFactory.decodeStream(it, null, options) }
+                options.inSampleSize = calculateInSampleSize(options, screenW.toInt(), screenH.toInt())
+                options.inJustDecodeBounds = false
+                val highResBmp = c.assets.open(currentAssetPath).use { BitmapFactory.decodeStream(it, null, options) }
+
+                handler.post {
+                    if (boxfullimg.visibility == View.VISIBLE) {
+                        animImg.setImageBitmap(highResBmp)
+                    }
+                }
+            }
+        }
 
         var openFinishedCount = 0
         fun onOpenAnimFinished() {
@@ -574,5 +650,106 @@ class Gallery(private val c: Context, private val w: WindowManager) {
             spring = SpringForce(endImgH).apply { stiffness = stiffIn; dampingRatio = damp }
             addUpdateListener { _, value, _ -> val lp = animImg.layoutParams; lp.height = value.toInt(); animImg.layoutParams = lp }
         }.start()
+    }
+}
+
+@SuppressLint("ClickableViewAccessibility")
+class ZoomableImageView(context: Context) : ImageView(context) {
+    var currentScale = 1f
+    private var mPosX = 0f
+    private var mPosY = 0f
+    private var mLastTouchX = 0f
+    private var mLastTouchY = 0f
+
+    private val scaleDetector = android.view.ScaleGestureDetector(context, object : android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        override fun onScale(detector: android.view.ScaleGestureDetector): Boolean {
+            currentScale *= detector.scaleFactor
+            currentScale = currentScale.coerceIn(1f, 4f)
+            scaleX = currentScale
+            scaleY = currentScale
+
+            val maxTransX = (width * currentScale - width) / 2
+            val maxTransY = (height * currentScale - height) / 2
+            mPosX = mPosX.coerceIn(-maxTransX, maxTransX)
+            mPosY = mPosY.coerceIn(-maxTransY, maxTransY)
+            translationX = mPosX
+            translationY = mPosY
+            return true
+        }
+    })
+
+    private val gestureDetector = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            if (currentScale > 1f) {
+                resetZoom()
+            } else {
+                currentScale = 2.5f
+                animate().scaleX(currentScale).scaleY(currentScale)
+                    .translationX(0f).translationY(0f)
+                    .setDuration(200).start()
+            }
+            return true
+        }
+    })
+
+    init {
+        isClickable = true
+        isFocusable = true
+    }
+
+    fun resetZoom() {
+        currentScale = 1f
+        mPosX = 0f
+        mPosY = 0f
+        scaleX = 1f
+        scaleY = 1f
+        translationX = 0f
+        translationY = 0f
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        scaleDetector.onTouchEvent(ev)
+        gestureDetector.onTouchEvent(ev)
+
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                mLastTouchX = ev.rawX
+                mLastTouchY = ev.rawY
+                parent?.requestDisallowInterceptTouchEvent(currentScale > 1f)
+            }
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                mLastTouchX = ev.rawX
+                mLastTouchY = ev.rawY
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val x = ev.rawX
+                val y = ev.rawY
+
+                if (!scaleDetector.isInProgress && currentScale > 1f && ev.pointerCount == 1) {
+                    val dx = x - mLastTouchX
+                    val dy = y - mLastTouchY
+                    val maxTransX = (width * currentScale - width) / 2
+                    val maxTransY = (height * currentScale - height) / 2
+
+                    mPosX = (mPosX + dx).coerceIn(-maxTransX, maxTransX)
+                    mPosY = (mPosY + dy).coerceIn(-maxTransY, maxTransY)
+                    translationX = mPosX
+                    translationY = mPosY
+
+                    if (mPosX == -maxTransX || mPosX == maxTransX) {
+                        parent?.requestDisallowInterceptTouchEvent(false)
+                    } else {
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                    }
+                }
+                mLastTouchX = x
+                mLastTouchY = y
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                mLastTouchX = ev.rawX
+                mLastTouchY = ev.rawY
+            }
+        }
+        return true
     }
 }
