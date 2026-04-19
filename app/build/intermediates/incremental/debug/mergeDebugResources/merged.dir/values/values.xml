@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2" xmlns:ns2="http://schemas.android.com/tools">
-    <attr format="reference" name="coordinatorLayoutStyle"/>
     <attr format="reference" name="nestedScrollViewStyle"/>
+    <attr format="reference" name="recyclerViewStyle"/>
     <bool name="enable_system_alarm_service_default">true</bool>
     <bool name="enable_system_foreground_service_default">true</bool>
     <bool name="enable_system_job_service_default">false</bool>
@@ -27,6 +27,12 @@
     <dimen name="compat_control_corner_material">2dp</dimen>
     <dimen name="compat_notification_large_icon_max_height">320dp</dimen>
     <dimen name="compat_notification_large_icon_max_width">320dp</dimen>
+    <dimen name="fastscroll_default_thickness">8dp</dimen>
+    <dimen name="fastscroll_margin">0dp</dimen>
+    <dimen name="fastscroll_minimum_range">50dp</dimen>
+    <dimen name="item_touch_helper_max_drag_scroll_per_frame">20dp</dimen>
+    <dimen name="item_touch_helper_swipe_escape_max_velocity">800dp</dimen>
+    <dimen name="item_touch_helper_swipe_escape_velocity">120dp</dimen>
     <dimen name="notification_action_icon_size">32dp</dimen>
     <dimen name="notification_action_text_size">13sp</dimen>
     <dimen name="notification_big_circle_margin">12dp</dimen>
@@ -36,7 +42,7 @@
     <dimen name="notification_main_column_padding_top">10dp</dimen>
     <dimen name="notification_media_narrow_margin">@dimen/notification_content_margin_start</dimen>
     <dimen name="notification_right_icon_size">16dp</dimen>
-    <dimen name="notification_right_side_padding_top">2dp</dimen>
+    <dimen name="notification_right_side_padding_top">4dp</dimen>
     <dimen name="notification_small_icon_background_padding">3dp</dimen>
     <dimen name="notification_small_icon_size_as_large">24dp</dimen>
     <dimen name="notification_subtext_size">13sp</dimen>
@@ -80,9 +86,11 @@
     <item name="androidx_compose_ui_view_composition_context" type="id"/>
     <item name="compose_view_saveable_id_tag" type="id"/>
     <item name="consume_window_insets_tag" type="id"/>
+    <item name="hide_graphics_layer_in_inspector_tag" type="id"/>
     <item name="hide_in_inspector_tag" type="id"/>
     <item name="inspection_slot_table_set" type="id"/>
     <item name="is_pooling_container_tag" type="id"/>
+    <item name="item_touch_helper_previous_elevation" type="id"/>
     <item name="line1" type="id"/>
     <item name="line3" type="id"/>
     <item name="pooling_container_listener_holder_tag" type="id"/>
@@ -145,11 +153,12 @@
     <string name="indeterminate">Partially checked</string>
     <string name="navigation_menu">"Navigation menu"</string>
     <string name="not_selected">Not selected</string>
-    <string name="off">Off</string>
-    <string name="on">On</string>
     <string name="range_end">"Range end"</string>
     <string name="range_start">"Range start"</string>
     <string name="selected">Selected</string>
+    <string name="state_empty">Empty</string>
+    <string name="state_off">Off</string>
+    <string name="state_on">On</string>
     <string name="status_bar_notification_info_overflow">999+</string>
     <string name="switch_role">Switch</string>
     <string name="tab">Tab</string>
@@ -179,9 +188,6 @@
     <style name="TextAppearance.Compat.Notification.Title" parent="@android:style/TextAppearance.StatusBar.EventContent.Title"/>
     <style name="Widget.Compat.NotificationActionContainer" parent=""/>
     <style name="Widget.Compat.NotificationActionText" parent=""/>
-    <style name="Widget.Support.CoordinatorLayout" parent="android:Widget">
-        <item name="statusBarBackground">#000000</item>
-    </style>
     <declare-styleable name="Capability">
         
         <attr format="reference" name="queryPatterns"/>
@@ -197,96 +203,6 @@
         
         <attr format="float" name="lStar"/>
         <attr name="android:lStar"/>
-    </declare-styleable>
-    <declare-styleable name="CoordinatorLayout">
-        
-        <attr format="reference" name="keylines"/>
-        
-        <attr format="color|reference" name="statusBarBackground"/>
-    </declare-styleable>
-    <declare-styleable name="CoordinatorLayout_Layout">
-        <attr name="android:layout_gravity"/>
-        
-        <attr format="string" name="layout_behavior"/>
-        
-        <attr format="reference" name="layout_anchor"/>
-        
-        <attr format="integer" name="layout_keyline"/>
-
-        
-        <attr name="layout_anchorGravity">
-            <!-- Push object to the top of its container, not changing its size. -->
-            <flag name="top" value="0x30"/>
-            <!-- Push object to the bottom of its container, not changing its size. -->
-            <flag name="bottom" value="0x50"/>
-            <!-- Push object to the left of its container, not changing its size. -->
-            <flag name="left" value="0x03"/>
-            <!-- Push object to the right of its container, not changing its size. -->
-            <flag name="right" value="0x05"/>
-            <!-- Place object in the vertical center of its container, not changing its size. -->
-            <flag name="center_vertical" value="0x10"/>
-            <!-- Grow the vertical size of the object if needed so it completely fills its container. -->
-            <flag name="fill_vertical" value="0x70"/>
-            <!-- Place object in the horizontal center of its container, not changing its size. -->
-            <flag name="center_horizontal" value="0x01"/>
-            <!-- Grow the horizontal size of the object if needed so it completely fills its container. -->
-            <flag name="fill_horizontal" value="0x07"/>
-            <!-- Place the object in the center of its container in both the vertical and horizontal axis, not changing its size. -->
-            <flag name="center" value="0x11"/>
-            <!-- Grow the horizontal and vertical size of the object if needed so it completely fills its container. -->
-            <flag name="fill" value="0x77"/>
-            <!-- Additional option that can be set to have the top and/or bottom edges of
-                 the child clipped to its container's bounds.
-                 The clip will be based on the vertical gravity: a top gravity will clip the bottom
-                 edge, a bottom gravity will clip the top edge, and neither will clip both edges. -->
-            <flag name="clip_vertical" value="0x80"/>
-            <!-- Additional option that can be set to have the left and/or right edges of
-                 the child clipped to its container's bounds.
-                 The clip will be based on the horizontal gravity: a left gravity will clip the right
-                 edge, a right gravity will clip the left edge, and neither will clip both edges. -->
-            <flag name="clip_horizontal" value="0x08"/>
-            <!-- Push object to the beginning of its container, not changing its size. -->
-            <flag name="start" value="0x00800003"/>
-            <!-- Push object to the end of its container, not changing its size. -->
-            <flag name="end" value="0x00800005"/>
-        </attr>
-
-        
-        <attr format="enum" name="layout_insetEdge">
-            <!-- Don't inset. -->
-            <enum name="none" value="0x0"/>
-            <!-- Inset the top edge. -->
-            <enum name="top" value="0x30"/>
-            <!-- Inset the bottom edge. -->
-            <enum name="bottom" value="0x50"/>
-            <!-- Inset the left edge. -->
-            <enum name="left" value="0x03"/>
-            <!-- Inset the right edge. -->
-            <enum name="right" value="0x05"/>
-            <!-- Inset the start edge. -->
-            <enum name="start" value="0x00800003"/>
-            <!-- Inset the end edge. -->
-            <enum name="end" value="0x00800005"/>
-        </attr>
-        
-        <attr name="layout_dodgeInsetEdges">
-            <!-- Don't dodge any edges -->
-            <flag name="none" value="0x0"/>
-            <!-- Dodge the top inset edge. -->
-            <flag name="top" value="0x30"/>
-            <!-- Dodge the bottom inset edge. -->
-            <flag name="bottom" value="0x50"/>
-            <!-- Dodge the left inset edge. -->
-            <flag name="left" value="0x03"/>
-            <!-- Dodge the right inset edge. -->
-            <flag name="right" value="0x05"/>
-            <!-- Dodge the start inset edge. -->
-            <flag name="start" value="0x00800003"/>
-            <!-- Dodge the end inset edge. -->
-            <flag name="end" value="0x00800005"/>
-            <!-- Dodge all the inset edges. -->
-            <flag name="all" value="0x77"/>
-        </attr>
     </declare-styleable>
     <declare-styleable name="FontFamily">
         
@@ -394,6 +310,27 @@
 
 <attr format="boolean" name="circleCrop"/>
 </declare-styleable>
+    <declare-styleable name="RecyclerView">
+        
+        <attr format="string" name="layoutManager"/>
+
+        
+        
+        
+        <eat-comment/>
+
+        <attr name="android:orientation"/>
+        <attr name="android:descendantFocusability"/>
+        <attr name="android:clipToPadding"/>
+        <attr format="integer" name="spanCount"/>
+        <attr format="boolean" name="reverseLayout"/>
+        <attr format="boolean" name="stackFromEnd"/>
+        <attr format="boolean" name="fastScrollEnabled"/>
+        <attr format="reference" name="fastScrollVerticalThumbDrawable"/>
+        <attr format="reference" name="fastScrollVerticalTrackDrawable"/>
+        <attr format="reference" name="fastScrollHorizontalThumbDrawable"/>
+        <attr format="reference" name="fastScrollHorizontalTrackDrawable"/>
+    </declare-styleable>
     <declare-styleable name="SignInButton"><attr format="reference" name="buttonSize">
 <enum name="standard" value="0"/>
 
@@ -413,4 +350,7 @@
 
 <attr format="reference|string" name="scopeUris"/>
 </declare-styleable>
+    <declare-styleable name="ViewPager2">
+        <attr name="android:orientation"/>
+    </declare-styleable>
 </resources>

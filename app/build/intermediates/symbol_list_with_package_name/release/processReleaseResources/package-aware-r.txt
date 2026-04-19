@@ -3,7 +3,11 @@ attr alpha
 attr buttonSize
 attr circleCrop
 attr colorScheme
-attr coordinatorLayoutStyle
+attr fastScrollEnabled
+attr fastScrollHorizontalThumbDrawable
+attr fastScrollHorizontalTrackDrawable
+attr fastScrollVerticalThumbDrawable
+attr fastScrollVerticalTrackDrawable
 attr font
 attr fontProviderAuthority
 attr fontProviderCerts
@@ -17,19 +21,16 @@ attr fontVariationSettings
 attr fontWeight
 attr imageAspectRatio
 attr imageAspectRatioAdjust
-attr keylines
 attr lStar
-attr layout_anchor
-attr layout_anchorGravity
-attr layout_behavior
-attr layout_dodgeInsetEdges
-attr layout_insetEdge
-attr layout_keyline
+attr layoutManager
 attr nestedScrollViewStyle
 attr queryPatterns
+attr recyclerViewStyle
+attr reverseLayout
 attr scopeUris
 attr shortcutMatchRequired
-attr statusBarBackground
+attr spanCount
+attr stackFromEnd
 attr ttcIndex
 bool enable_system_alarm_service_default
 bool enable_system_foreground_service_default
@@ -61,6 +62,12 @@ dimen compat_button_padding_vertical_material
 dimen compat_control_corner_material
 dimen compat_notification_large_icon_max_height
 dimen compat_notification_large_icon_max_width
+dimen fastscroll_default_thickness
+dimen fastscroll_margin
+dimen fastscroll_minimum_range
+dimen item_touch_helper_max_drag_scroll_per_frame
+dimen item_touch_helper_swipe_escape_max_velocity
+dimen item_touch_helper_swipe_escape_velocity
 dimen notification_action_icon_size
 dimen notification_action_text_size
 dimen notification_big_circle_margin
@@ -168,28 +175,18 @@ id action_text
 id actions
 id adjust_height
 id adjust_width
-id all
 id androidx_compose_ui_view_composition_context
 id async
 id auto
 id blocking
-id bottom
-id center
-id center_horizontal
-id center_vertical
 id chronometer
-id clip_horizontal
-id clip_vertical
 id compose_view_saveable_id_tag
 id consume_window_insets_tag
 id dark
 id dialog_button
 id edit_text_id
-id end
-id fill
-id fill_horizontal
-id fill_vertical
 id forever
+id hide_graphics_layer_in_inspector_tag
 id hide_ime_id
 id hide_in_inspector_tag
 id icon
@@ -199,7 +196,7 @@ id info
 id inspection_slot_table_set
 id is_pooling_container_tag
 id italic
-id left
+id item_touch_helper_previous_elevation
 id light
 id line1
 id line3
@@ -210,11 +207,9 @@ id notification_main_column
 id notification_main_column_container
 id pooling_container_listener_holder_tag
 id report_drawn
-id right
 id right_icon
 id right_side
 id standard
-id start
 id tag_accessibility_actions
 id tag_accessibility_clickable_spans
 id tag_accessibility_heading
@@ -232,7 +227,6 @@ id text
 id text2
 id time
 id title
-id top
 id view_tree_lifecycle_owner
 id view_tree_on_back_pressed_dispatcher_owner
 id view_tree_saved_state_registry_owner
@@ -285,11 +279,12 @@ string in_progress
 string indeterminate
 string navigation_menu
 string not_selected
-string off
-string on
 string range_end
 string range_start
 string selected
+string state_empty
+string state_off
+string state_on
 string status_bar_notification_info_overflow
 string switch_role
 string tab
@@ -306,14 +301,13 @@ style TextAppearance_Compat_Notification_Time
 style TextAppearance_Compat_Notification_Title
 style Widget_Compat_NotificationActionContainer
 style Widget_Compat_NotificationActionText
-style Widget_Support_CoordinatorLayout
 styleable Capability queryPatterns shortcutMatchRequired
 styleable ColorStateListItem android_color android_alpha android_lStar alpha lStar
-styleable CoordinatorLayout keylines statusBarBackground
-styleable CoordinatorLayout_Layout android_layout_gravity layout_anchor layout_anchorGravity layout_behavior layout_dodgeInsetEdges layout_insetEdge layout_keyline
 styleable FontFamily fontProviderAuthority fontProviderCerts fontProviderFetchStrategy fontProviderFetchTimeout fontProviderPackage fontProviderQuery fontProviderSystemFontFamily
 styleable FontFamilyFont android_font android_fontWeight android_fontStyle android_ttcIndex android_fontVariationSettings font fontStyle fontVariationSettings fontWeight ttcIndex
 styleable GradientColor android_startColor android_endColor android_type android_centerX android_centerY android_gradientRadius android_tileMode android_centerColor android_startX android_startY android_endX android_endY
 styleable GradientColorItem android_color android_offset
 styleable LoadingImageView circleCrop imageAspectRatio imageAspectRatioAdjust
+styleable RecyclerView android_orientation android_clipToPadding android_descendantFocusability fastScrollEnabled fastScrollHorizontalThumbDrawable fastScrollHorizontalTrackDrawable fastScrollVerticalThumbDrawable fastScrollVerticalTrackDrawable layoutManager reverseLayout spanCount stackFromEnd
 styleable SignInButton buttonSize colorScheme scopeUris
+styleable ViewPager2 android_orientation

@@ -81,17 +81,26 @@ dependencies {
     implementation("com.google.http-client:google-http-client-android:1.44.1")
     implementation("com.google.http-client:google-http-client-gson:1.44.1")
 
-    val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
+    // --- QUAN TRỌNG NHẤT: Nâng cấp BOM lên 2024.10.00 (Chứa Compose 1.7.x) ---
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.00")
     implementation(composeBom)
+
+    // Khai báo Compose (Không cần ghi version 1.7.0 nữa, BOM đã tự lo)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material:material")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.foundation:foundation")
+
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     implementation("androidx.compose.runtime:runtime-livedata")
 
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")
     implementation("androidx.dynamicanimation:dynamicanimation:1.0.0")
+
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 }

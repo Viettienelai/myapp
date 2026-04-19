@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.myapp-mergeDebugResources-54:/values-ro/values-ro.xml",
+            "outputFile": "com.myapp-mergeDebugResources-56:/values-ro/values-ro.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\8ae24c9391aec723604e79afd1fad6a4\\workspace\\transformed\\foundation-release\\res\\values-ro\\values-ro.xml",
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\be7eed1235f384be4b251fb55ea0d651\\workspace\\transformed\\foundation-release\\res\\values-ro\\values-ro.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -13,45 +13,28 @@
                         "endOffsets": "145,245"
                     },
                     "to": {
-                        "startLines": "45,46",
+                        "startLines": "46,47",
                         "startColumns": "4,4",
-                        "startOffsets": "4649,4744",
+                        "startOffsets": "4736,4831",
                         "endColumns": "94,99",
-                        "endOffsets": "4739,4839"
+                        "endOffsets": "4826,4926"
                     }
                 },
                 {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\d292caa4d82c25bb90a8d49a455091ff\\workspace\\transformed\\core-1.12.0\\res\\values-ro\\values-ro.xml",
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\5a2cc25df5bb2f3f5067fdc2e668fad8\\workspace\\transformed\\ui-release\\res\\values-ro\\values-ro.xml",
                     "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,153,255,355,454,556,665,782",
-                        "endColumns": "97,101,99,98,101,108,116,100",
-                        "endOffsets": "148,250,350,449,551,660,777,878"
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,202,286,383,485,573,651,738,829,911,999,1089,1162,1236,1315,1390,1467,1534",
+                        "endColumns": "96,83,96,101,87,77,86,90,81,87,89,72,73,78,74,76,66,114",
+                        "endOffsets": "197,281,378,480,568,646,733,824,906,994,1084,1157,1231,1310,1385,1462,1529,1644"
                     },
                     "to": {
-                        "startLines": "2,3,4,5,6,7,8,41",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,203,305,405,504,606,715,4289",
-                        "endColumns": "97,101,99,98,101,108,116,100",
-                        "endOffsets": "198,300,400,499,601,710,827,4385"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\affb418260055b66c19850f7d3de8188\\workspace\\transformed\\ui-release\\res\\values-ro\\values-ro.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,202,286,383,485,573,651,738,829,911,983,1052,1140,1230,1303,1380,1447",
-                        "endColumns": "96,83,96,101,87,77,86,90,81,71,68,87,89,72,76,66,114",
-                        "endOffsets": "197,281,378,480,568,646,733,824,906,978,1047,1135,1225,1298,1375,1442,1557"
-                    },
-                    "to": {
-                        "startLines": "9,10,29,30,31,32,33,34,35,36,37,38,39,40,42,43,44",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "832,929,3272,3369,3471,3559,3637,3724,3815,3897,3969,4038,4126,4216,4390,4467,4534",
-                        "endColumns": "96,83,96,101,87,77,86,90,81,71,68,87,89,72,76,66,114",
-                        "endOffsets": "924,1008,3364,3466,3554,3632,3719,3810,3892,3964,4033,4121,4211,4284,4462,4529,4644"
+                        "startLines": "9,10,29,30,31,32,33,34,35,36,37,38,39,40,41,43,44,45",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "832,929,3272,3369,3471,3559,3637,3724,3815,3897,3985,4075,4148,4222,4301,4477,4554,4621",
+                        "endColumns": "96,83,96,101,87,77,86,90,81,87,89,72,73,78,74,76,66,114",
+                        "endOffsets": "924,1008,3364,3466,3554,3632,3719,3810,3892,3980,4070,4143,4217,4296,4371,4549,4616,4731"
                     }
                 },
                 {
@@ -69,6 +52,23 @@
                         "startOffsets": "2033",
                         "endColumns": "143",
                         "endOffsets": "2172"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\6009c9b0fe67d751a97af6fb6309d962\\workspace\\transformed\\core-1.13.1\\res\\values-ro\\values-ro.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,153,255,355,454,556,665,782",
+                        "endColumns": "97,101,99,98,101,108,116,100",
+                        "endOffsets": "148,250,350,449,551,660,777,878"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,42",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,203,305,405,504,606,715,4376",
+                        "endColumns": "97,101,99,98,101,108,116,100",
+                        "endOffsets": "198,300,400,499,601,710,827,4472"
                     }
                 },
                 {

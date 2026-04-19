@@ -1,50 +1,50 @@
 [
     {
-        "merged": "com.myapp-debug-56:/drawable_quickshare.xml.flat",
-        "source": "com.myapp-main-58:/drawable/quickshare.xml"
+        "merged": "com.myapp-debug-58:/drawable_phone.xml.flat",
+        "source": "com.myapp-main-60:/drawable/phone.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_dim.xml.flat",
-        "source": "com.myapp-main-58:/drawable/dim.xml"
+        "merged": "com.myapp-debug-58:/drawable_setting.xml.flat",
+        "source": "com.myapp-main-60:/drawable/setting.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_obsidian2.xml.flat",
-        "source": "com.myapp-main-58:/drawable/obsidian2.xml"
+        "merged": "com.myapp-debug-58:/drawable_scan.xml.flat",
+        "source": "com.myapp-main-60:/drawable/scan.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_obsidian1.xml.flat",
-        "source": "com.myapp-main-58:/drawable/obsidian1.xml"
+        "merged": "com.myapp-debug-58:/drawable_obsidian2.xml.flat",
+        "source": "com.myapp-main-60:/drawable/obsidian2.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_setting.xml.flat",
-        "source": "com.myapp-main-58:/drawable/setting.xml"
+        "merged": "com.myapp-debug-58:/drawable_lens.xml.flat",
+        "source": "com.myapp-main-60:/drawable/lens.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_lens.xml.flat",
-        "source": "com.myapp-main-58:/drawable/lens.xml"
+        "merged": "com.myapp-debug-58:/drawable_obsidian1.xml.flat",
+        "source": "com.myapp-main-60:/drawable/obsidian1.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_screenon.xml.flat",
-        "source": "com.myapp-main-58:/drawable/screenon.xml"
+        "merged": "com.myapp-debug-58:/drawable_clean.xml.flat",
+        "source": "com.myapp-main-60:/drawable/clean.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_scan.xml.flat",
-        "source": "com.myapp-main-58:/drawable/scan.xml"
+        "merged": "com.myapp-debug-58:/drawable_light.xml.flat",
+        "source": "com.myapp-main-60:/drawable/light.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_clean.xml.flat",
-        "source": "com.myapp-main-58:/drawable/clean.xml"
+        "merged": "com.myapp-debug-58:/drawable_screenon.xml.flat",
+        "source": "com.myapp-main-60:/drawable/screenon.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_light.xml.flat",
-        "source": "com.myapp-main-58:/drawable/light.xml"
+        "merged": "com.myapp-debug-58:/drawable_dim.xml.flat",
+        "source": "com.myapp-main-60:/drawable/dim.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_phone.xml.flat",
-        "source": "com.myapp-main-58:/drawable/phone.xml"
+        "merged": "com.myapp-debug-58:/drawable_quickshare.xml.flat",
+        "source": "com.myapp-main-60:/drawable/quickshare.xml"
     },
     {
-        "merged": "com.myapp-debug-56:/drawable_drive.xml.flat",
-        "source": "com.myapp-main-58:/drawable/drive.xml"
+        "merged": "com.myapp-debug-58:/drawable_drive.xml.flat",
+        "source": "com.myapp-main-60:/drawable/drive.xml"
     }
 ]

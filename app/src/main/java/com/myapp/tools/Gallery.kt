@@ -1,14 +1,19 @@
 package com.myapp.tools
 
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.util.DisplayMetrics
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -17,7 +22,12 @@ import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.FloatValueHolder
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.MarginPageTransformer
+import androidx.viewpager2.widget.ViewPager2
+import kotlin.math.abs
 
+@Suppress("DEPRECATION")
 class Gallery(private val c: Context, private val w: WindowManager) {
 
     private fun dp(px: Int): Int = (c.resources.displayMetrics.density * px).toInt()
@@ -100,6 +110,8 @@ class Gallery(private val c: Context, private val w: WindowManager) {
             }
         }
 
+        val imageKeys = imageMap.keys.sorted().toList()
+        val thumbViews = mutableMapOf<Int, View>()
         val imgSizePx = (dp(300) - dp(20) - dp(3)) / 4
 
         fun createGrid(startIndex: Int): LinearLayout {
@@ -136,8 +148,12 @@ class Gallery(private val c: Context, private val w: WindowManager) {
                                 setImageBitmap(bmp)
                             }
                             box.addView(iv)
+                            thumbViews[idx] = box
 
-                            box.setOnClickListener { openFullscreen(box, bmp) }
+                            box.setOnClickListener {
+                                val clickedIndex = imageKeys.indexOf(idx)
+                                openFullscreen(clickedIndex, bmp, imageKeys, thumbViews, imageMap)
+                            }
                         }
                     }
                     rowLayout.addView(box)
@@ -148,12 +164,10 @@ class Gallery(private val c: Context, private val w: WindowManager) {
         }
 
         val topBlock = createGrid(1)
-
         val divider = View(c).apply {
             setBackgroundColor(Color.argb(80, 255, 255, 255))
             layoutParams = LinearLayout.LayoutParams(dp(280), dp(1))
         }
-
         val bottomBlock = createGrid(9)
 
         galleryContainer.addView(topBlock)
@@ -164,136 +178,401 @@ class Gallery(private val c: Context, private val w: WindowManager) {
         galleryContainer.animate().alpha(1f).setDuration(200).setStartDelay(100).start()
     }
 
-    // --- HÀM XỬ LÝ ẢNH FULLSCREEN (Hero Animation) ---
-    private fun openFullscreen(v: View, bmp: Bitmap) {
-        // Container chính bám Fullscreen nhưng nền trong suốt
-        val fsContainer = FrameLayout(c).apply {
-            setBackgroundColor(Color.TRANSPARENT)
-            isClickable = true
-        }
+    // --- HÀM XỬ LÝ ẢNH FULLSCREEN VÀ CỬ CHỈ DRAG ---
+    @SuppressLint("ClickableViewAccessibility")
+    private fun openFullscreen(startIndex: Int, clickedBmp: Bitmap, imageKeys: List<Int>, thumbViews: Map<Int, View>, imageMap: Map<Int, String>) {
 
-        // Tạo 1 layer nền đen riêng biệt để chỉnh Alpha (mờ) mà không ảnh hưởng ảnh
         val bgView = View(c).apply {
             setBackgroundColor(Color.BLACK)
-            alpha = 0f
             layoutParams = FrameLayout.LayoutParams(-1, -1)
         }
-        fsContainer.addView(bgView)
 
-        // Lấy tọa độ tuyệt đối của ảnh Thumbnail trên màn hình
-        val loc = IntArray(2)
-        v.getLocationOnScreen(loc)
-        val startX = loc[0].toFloat()
-        val startY = loc[1].toFloat()
-        val startW = v.width.toFloat()
-        val startH = v.height.toFloat()
+        val boxfullimg = FrameLayout(c).apply {
+            clipChildren = true
+        }
 
-        val screenW = c.resources.displayMetrics.widthPixels.toFloat()
-        val screenH = c.resources.displayMetrics.heightPixels.toFloat()
-
-        // Tạo ảnh động bay ra (Không thay đổi alpha, luôn = 1f)
-        val animImg = ImageView(c).apply {
-            setImageBitmap(bmp)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            layoutParams = FrameLayout.LayoutParams(startW.toInt(), startH.toInt())
-            x = startX
-            y = startY
+        val animImg = object : ImageView(c) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                super.onMeasure(widthMeasureSpec, View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+            }
+        }.apply {
+            adjustViewBounds = true
+            scaleType = ImageView.ScaleType.FIT_XY
             alpha = 1f
         }
-        fsContainer.addView(animImg)
+        boxfullimg.addView(animImg)
+
+        val viewPager = ViewPager2(c).apply {
+            layoutParams = FrameLayout.LayoutParams(-1, -1)
+            setPageTransformer(MarginPageTransformer(dp(20)))
+            visibility = View.INVISIBLE
+        }
+
+        class PagerAdapter : RecyclerView.Adapter<PagerAdapter.VH>() {
+            inner class VH(val iv: ImageView) : RecyclerView.ViewHolder(iv)
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+                val iv = ImageView(c).apply {
+                    layoutParams = ViewGroup.LayoutParams(-1, -1)
+                    scaleType = ImageView.ScaleType.FIT_CENTER
+                }
+                return VH(iv)
+            }
+            override fun onBindViewHolder(holder: VH, position: Int) {
+                runCatching {
+                    val key = imageKeys[position]
+                    val bmp = BitmapFactory.decodeStream(c.assets.open("gallery/${imageMap[key]}"))
+                    holder.iv.setImageBitmap(bmp)
+                }
+            }
+            override fun getItemCount() = imageKeys.size
+        }
+        viewPager.adapter = PagerAdapter()
+        viewPager.setCurrentItem(startIndex, false)
+
+        val screenW: Float
+        val screenH: Float
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = w.currentWindowMetrics.bounds
+            screenW = bounds.width().toFloat()
+            screenH = bounds.height().toFloat()
+        } else {
+            val metrics = DisplayMetrics()
+            w.defaultDisplay.getRealMetrics(metrics)
+            screenW = metrics.widthPixels.toFloat()
+            screenH = metrics.heightPixels.toFloat()
+        }
+
+        var isClosing = false
+        var isVerticalDrag = false
+        var startTouchX = 0f
+        var startTouchY = 0f
+        var initialBoxX = 0f
+        var initialBoxY = 0f
+
+        var destX = 0f
+        var destY = 0f
+        var destW = 0f
+        var destH = 0f
+        var targetImgW = 0f
+        var targetImgH = 0f
+
+        val stiffIn = 600f
+        val stiffOut = 800f
+        val damp = 1f
+
+        val fsContainer = object : FrameLayout(c) {
+            override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+                if (isClosing) return true
+                if (viewPager.visibility != View.VISIBLE) return true
+
+                when (ev.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        startTouchX = ev.rawX
+                        startTouchY = ev.rawY
+                        isVerticalDrag = false
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        val dx = abs(ev.rawX - startTouchX)
+                        val dy = abs(ev.rawY - startTouchY)
+
+                        if (!isVerticalDrag && dy > dx * 1.2f && dy > dp(1)) {
+                            isVerticalDrag = true
+                            prepareForDrag()
+                            return true
+                        }
+                    }
+                }
+                return super.onInterceptTouchEvent(ev)
+            }
+
+            fun prepareForDrag() {
+                val currentIndex = viewPager.currentItem
+                val key = imageKeys[currentIndex]
+
+                val rv = viewPager.getChildAt(0) as? RecyclerView
+                val vh = rv?.findViewHolderForAdapterPosition(currentIndex) as? PagerAdapter.VH
+                val cachedDrawable = vh?.iv?.drawable
+
+                val sW: Float
+                val sH: Float
+
+                if (cachedDrawable != null) {
+                    animImg.setImageDrawable(cachedDrawable)
+                    val iW = cachedDrawable.intrinsicWidth.toFloat()
+                    val iH = cachedDrawable.intrinsicHeight.toFloat()
+                    sW = if (iW > 0) iW else 1f
+                    sH = if (iH > 0) iH else 1f
+                } else {
+                    val currentBmp = BitmapFactory.decodeStream(c.assets.open("gallery/${imageMap[key]}"))
+                    animImg.setImageBitmap(currentBmp)
+                    val iW = currentBmp.width.toFloat()
+                    val iH = currentBmp.height.toFloat()
+                    sW = if (iW > 0) iW else 1f
+                    sH = if (iH > 0) iH else 1f
+                }
+
+                val thumb = thumbViews[key]
+                if (thumb != null && thumb.isAttachedToWindow) {
+                    val tLoc = IntArray(2)
+                    thumb.getLocationOnScreen(tLoc)
+                    destX = tLoc[0].toFloat()
+                    destY = tLoc[1].toFloat()
+                    destW = thumb.width.toFloat()
+                    destH = thumb.height.toFloat()
+                } else {
+                    destX = screenW / 2; destY = screenH / 2; destW = dp(10).toFloat(); destH = dp(10).toFloat()
+                }
+
+                val scaleThumb = maxOf(destW / sW, destH / sH)
+                targetImgW = sW * scaleThumb
+                targetImgH = sH * scaleThumb
+
+                val scaleFull = minOf(screenW / sW, screenH / sH)
+                val fullImgW = sW * scaleFull
+                val fullImgH = sH * scaleFull
+
+                boxfullimg.layoutParams = FrameLayout.LayoutParams(screenW.toInt(), screenH.toInt()).apply { gravity = Gravity.TOP or Gravity.START }
+                boxfullimg.translationX = 0f
+                boxfullimg.translationY = 0f
+                boxfullimg.scaleX = 1f
+                boxfullimg.scaleY = 1f
+                animImg.layoutParams = FrameLayout.LayoutParams(fullImgW.toInt(), fullImgH.toInt(), Gravity.CENTER)
+
+                viewPager.visibility = View.INVISIBLE
+                boxfullimg.visibility = View.VISIBLE
+
+                initialBoxX = 0f
+                initialBoxY = 0f
+            }
+
+            @SuppressLint("ClickableViewAccessibility")
+            override fun onTouchEvent(event: MotionEvent): Boolean {
+                if (isClosing) return true
+                if (isVerticalDrag) {
+                    when (event.action) {
+                        MotionEvent.ACTION_MOVE -> {
+                            val deltaX = event.rawX - startTouchX
+                            val deltaY = event.rawY - startTouchY
+                            val newTransY = initialBoxY + deltaY
+
+                            boxfullimg.translationX = initialBoxX + deltaX
+                            boxfullimg.translationY = newTransY
+
+                            val dragThreshold = dp(100).toFloat()
+                            val progress = minOf(1f, abs(newTransY) / dragThreshold)
+
+                            val currentScale = 1f - (progress * 0.2f)
+                            boxfullimg.scaleX = currentScale
+                            boxfullimg.scaleY = currentScale
+
+                            bgView.alpha = 1f - progress
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            isVerticalDrag = false
+                            val currentTransY = boxfullimg.translationY
+
+                            if (abs(currentTransY) >= dp(100)) {
+                                executeClose()
+                            } else {
+                                cancelClose()
+                            }
+                        }
+                    }
+                    return true
+                }
+                return super.onTouchEvent(event)
+            }
+
+            fun executeClose() {
+                isClosing = true
+                var finishedCount = 0
+                val totalAnims = 7
+
+                // Dùng 'this' một cách tường minh thông qua biến overlayView
+                // để tránh lỗi Unresolved reference khi trình biên dịch đọc mã
+                val overlayView = this
+
+                fun onFinished() {
+                    finishedCount++
+                    if (finishedCount == totalAnims) runCatching { w.removeView(overlayView) }
+                }
+
+                SpringAnimation(bgView, DynamicAnimation.ALPHA).apply {
+                    spring = SpringForce(0f).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                val currentBoxW = boxfullimg.layoutParams.width.toFloat()
+                val currentBoxH = boxfullimg.layoutParams.height.toFloat()
+
+                SpringAnimation(FloatValueHolder(currentBoxW)).apply {
+                    spring = SpringForce(destW).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addUpdateListener { _, value, _ -> val lp = boxfullimg.layoutParams; lp.width = value.toInt(); boxfullimg.layoutParams = lp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(FloatValueHolder(currentBoxH)).apply {
+                    spring = SpringForce(destH).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addUpdateListener { _, value, _ -> val lp = boxfullimg.layoutParams; lp.height = value.toInt(); boxfullimg.layoutParams = lp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.TRANSLATION_X).apply {
+                    spring = SpringForce(destX).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.TRANSLATION_Y).apply {
+                    spring = SpringForce(destY).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.SCALE_X).apply { spring = SpringForce(1f).apply { stiffness = stiffOut; dampingRatio = damp } }.start()
+                SpringAnimation(boxfullimg, DynamicAnimation.SCALE_Y).apply { spring = SpringForce(1f).apply { stiffness = stiffOut; dampingRatio = damp } }.start()
+
+                val currentImgW = animImg.layoutParams.width.toFloat()
+                val currentImgH = animImg.layoutParams.height.toFloat()
+
+                SpringAnimation(FloatValueHolder(currentImgW)).apply {
+                    spring = SpringForce(targetImgW).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addUpdateListener { _, value, _ -> val lp = animImg.layoutParams; lp.width = value.toInt(); animImg.layoutParams = lp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(FloatValueHolder(currentImgH)).apply {
+                    spring = SpringForce(targetImgH).apply { stiffness = stiffOut; dampingRatio = damp }
+                    addUpdateListener { _, value, _ -> val lp = animImg.layoutParams; lp.height = value.toInt(); animImg.layoutParams = lp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+            }
+
+            fun cancelClose() {
+                var finishedCount = 0
+                val totalAnims = 5
+
+                fun onFinished() {
+                    finishedCount++
+                    if (finishedCount == totalAnims) {
+                        viewPager.visibility = View.VISIBLE
+                        boxfullimg.visibility = View.INVISIBLE
+                    }
+                }
+
+                bgView.animate().alpha(1f).setDuration(100).start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.TRANSLATION_X).apply {
+                    spring = SpringForce(0f).apply { stiffness = stiffIn; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.TRANSLATION_Y).apply {
+                    spring = SpringForce(0f).apply { stiffness = stiffIn; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.SCALE_X).apply {
+                    spring = SpringForce(1f).apply { stiffness = stiffIn; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                SpringAnimation(boxfullimg, DynamicAnimation.SCALE_Y).apply {
+                    spring = SpringForce(1f).apply { stiffness = stiffIn; dampingRatio = damp }
+                    addEndListener { _, _, _, _ -> onFinished() }
+                }.start()
+
+                onFinished()
+            }
+        }
+
+        fsContainer.addView(bgView)
+        fsContainer.addView(boxfullimg)
+        fsContainer.addView(viewPager)
 
         val fsLp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             2038,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
+            gravity = Gravity.TOP or Gravity.START
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
 
         runCatching { w.addView(fsContainer, fsLp) }
 
-        val stiff = 800f
-        val damp = 1f
+        // --- 4. KÍCH HOẠT ZOOM-IN BAN ĐẦU ---
+        val clickedThumb = thumbViews[imageKeys[startIndex]] ?: return
+        val loc = IntArray(2)
+        clickedThumb.getLocationOnScreen(loc)
 
-        // 1. Phủ mờ nền đen
-        SpringAnimation(bgView, DynamicAnimation.ALPHA).apply {
-            spring = SpringForce(1f).apply { stiffness = stiff; dampingRatio = damp }
-        }.start()
+        val startW = clickedThumb.width.toFloat()
+        val startH = clickedThumb.height.toFloat()
+        val startX = loc[0].toFloat()
+        val startY = loc[1].toFloat()
 
-        // 2. Phóng to & Dịch chuyển Ảnh ra giữa
-        SpringAnimation(FloatValueHolder(startW)).apply {
-            spring = SpringForce(screenW).apply { stiffness = stiff; dampingRatio = damp }
-            addUpdateListener { _, value, _ ->
-                val lp = animImg.layoutParams; lp.width = value.toInt(); animImg.layoutParams = lp
+        val imgW = clickedBmp.width.toFloat()
+        val imgH = clickedBmp.height.toFloat()
+
+        val scaleStart = maxOf(startW / imgW, startH / imgH)
+        val startImgW = imgW * scaleStart
+        val startImgH = imgH * scaleStart
+
+        val scaleEnd = minOf(screenW / imgW, screenH / imgH)
+        val endImgW = imgW * scaleEnd
+        val endImgH = imgH * scaleEnd
+
+        boxfullimg.layoutParams = FrameLayout.LayoutParams(startW.toInt(), startH.toInt()).apply { gravity = Gravity.TOP or Gravity.START }
+        boxfullimg.translationX = startX
+        boxfullimg.translationY = startY
+        animImg.setImageBitmap(clickedBmp)
+        animImg.layoutParams = FrameLayout.LayoutParams(startImgW.toInt(), startImgH.toInt(), Gravity.CENTER)
+
+        var openFinishedCount = 0
+        fun onOpenAnimFinished() {
+            openFinishedCount++
+            if (openFinishedCount == 4) {
+                viewPager.visibility = View.VISIBLE
+                boxfullimg.visibility = View.INVISIBLE
             }
+        }
+
+        SpringAnimation(FloatValueHolder(startW)).apply {
+            spring = SpringForce(screenW).apply { stiffness = stiffIn; dampingRatio = damp }
+            addUpdateListener { _, value, _ ->
+                val lp = boxfullimg.layoutParams; lp.width = value.toInt(); boxfullimg.layoutParams = lp
+                val ratio = (value - startW) / (screenW - startW)
+                bgView.alpha = ratio.coerceIn(0f, 1f)
+            }
+            addEndListener { _, _, _, _ -> onOpenAnimFinished() }
         }.start()
 
         SpringAnimation(FloatValueHolder(startH)).apply {
-            spring = SpringForce(screenH).apply { stiffness = stiff; dampingRatio = damp }
-            addUpdateListener { _, value, _ ->
-                val lp = animImg.layoutParams; lp.height = value.toInt(); animImg.layoutParams = lp
-            }
+            spring = SpringForce(screenH).apply { stiffness = stiffIn; dampingRatio = damp }
+            addUpdateListener { _, value, _ -> val lp = boxfullimg.layoutParams; lp.height = value.toInt(); boxfullimg.layoutParams = lp }
+            addEndListener { _, _, _, _ -> onOpenAnimFinished() }
         }.start()
 
-        SpringAnimation(animImg, DynamicAnimation.X).apply {
-            spring = SpringForce(0f).apply { stiffness = stiff; dampingRatio = damp }
+        SpringAnimation(boxfullimg, DynamicAnimation.TRANSLATION_X).apply {
+            spring = SpringForce(0f).apply { stiffness = stiffIn; dampingRatio = damp }
+            addEndListener { _, _, _, _ -> onOpenAnimFinished() }
         }.start()
 
-        SpringAnimation(animImg, DynamicAnimation.Y).apply {
-            spring = SpringForce(0f).apply { stiffness = stiff; dampingRatio = damp }
+        SpringAnimation(boxfullimg, DynamicAnimation.TRANSLATION_Y).apply {
+            spring = SpringForce(0f).apply { stiffness = stiffIn; dampingRatio = damp }
+            addEndListener { _, _, _, _ -> onOpenAnimFinished() }
         }.start()
 
-        // --- XỬ LÝ KHI ĐÓNG ẢNH ---
-        var closing = false
-        fsContainer.setOnClickListener {
-            if (closing) return@setOnClickListener
-            closing = true
+        SpringAnimation(FloatValueHolder(startImgW)).apply {
+            spring = SpringForce(endImgW).apply { stiffness = stiffIn; dampingRatio = damp }
+            addUpdateListener { _, value, _ -> val lp = animImg.layoutParams; lp.width = value.toInt(); animImg.layoutParams = lp }
+        }.start()
 
-            // Bộ đếm đồng bộ để chặn nháy đen (Chỉ removeView khi CẢ 5 lò xo đã dừng)
-            var finishedCount = 0
-            val totalAnimations = 5
-
-            fun onAnimFinished() {
-                finishedCount++
-                if (finishedCount == totalAnimations) {
-                    runCatching { w.removeView(fsContainer) }
-                }
-            }
-
-            // Thu hồi nền đen mờ
-            SpringAnimation(bgView, DynamicAnimation.ALPHA).apply {
-                spring = SpringForce(0f).apply { stiffness = stiff; dampingRatio = damp }
-                addEndListener { _, _, _, _ -> onAnimFinished() }
-            }.start()
-
-            // Thu hồi Ảnh về vị trí cũ
-            SpringAnimation(FloatValueHolder(animImg.width.toFloat())).apply {
-                spring = SpringForce(startW).apply { stiffness = stiff; dampingRatio = damp }
-                addUpdateListener { _, value, _ ->
-                    val lp = animImg.layoutParams; lp.width = value.toInt(); animImg.layoutParams = lp
-                }
-                addEndListener { _, _, _, _ -> onAnimFinished() }
-            }.start()
-
-            SpringAnimation(FloatValueHolder(animImg.height.toFloat())).apply {
-                spring = SpringForce(startH).apply { stiffness = stiff; dampingRatio = damp }
-                addUpdateListener { _, value, _ ->
-                    val lp = animImg.layoutParams; lp.height = value.toInt(); animImg.layoutParams = lp
-                }
-                addEndListener { _, _, _, _ -> onAnimFinished() }
-            }.start()
-
-            SpringAnimation(animImg, DynamicAnimation.X).apply {
-                spring = SpringForce(startX).apply { stiffness = stiff; dampingRatio = damp }
-                addEndListener { _, _, _, _ -> onAnimFinished() }
-            }.start()
-
-            SpringAnimation(animImg, DynamicAnimation.Y).apply {
-                spring = SpringForce(startY).apply { stiffness = stiff; dampingRatio = damp }
-                addEndListener { _, _, _, _ -> onAnimFinished() }
-            }.start()
-        }
+        SpringAnimation(FloatValueHolder(startImgH)).apply {
+            spring = SpringForce(endImgH).apply { stiffness = stiffIn; dampingRatio = damp }
+            addUpdateListener { _, value, _ -> val lp = animImg.layoutParams; lp.height = value.toInt(); animImg.layoutParams = lp }
+        }.start()
     }
 }

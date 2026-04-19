@@ -1,25 +1,8 @@
 {
     "logs": [
         {
-            "outputFile": "com.myapp-mergeReleaseResources-54:/values-ar/values-ar.xml",
+            "outputFile": "com.myapp-mergeReleaseResources-56:/values-ar/values-ar.xml",
             "map": [
-                {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\affb418260055b66c19850f7d3de8188\\workspace\\transformed\\ui-release\\res\\values-ar\\values-ar.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,194,277,372,470,555,636,742,826,907,978,1045,1126,1209,1279,1355,1429",
-                        "endColumns": "88,82,94,97,84,80,105,83,80,70,66,80,82,69,75,73,120",
-                        "endOffsets": "189,272,367,465,550,631,737,821,902,973,1040,1121,1204,1274,1350,1424,1545"
-                    },
-                    "to": {
-                        "startLines": "9,10,29,30,31,32,33,34,35,36,37,38,39,40,42,43,44",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "817,906,3085,3180,3278,3363,3444,3550,3634,3715,3786,3853,3934,4017,4188,4264,4338",
-                        "endColumns": "88,82,94,97,84,80,105,83,80,70,66,80,82,69,75,73,120",
-                        "endOffsets": "901,984,3175,3273,3358,3439,3545,3629,3710,3781,3848,3929,4012,4082,4259,4333,4454"
-                    }
-                },
                 {
                     "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\53cbd0e6f23b57955ef97bdd5d2a4a3d\\workspace\\transformed\\play-services-basement-18.2.0\\res\\values-ar\\values.xml",
                     "from": {
@@ -38,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\8ae24c9391aec723604e79afd1fad6a4\\workspace\\transformed\\foundation-release\\res\\values-ar\\values-ar.xml",
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\d1d8bbb1241f2a41f23b41534abf9fb7\\workspace\\transformed\\foundation-release\\res\\values-ar\\values-ar.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -47,11 +30,11 @@
                         "endOffsets": "134,220"
                     },
                     "to": {
-                        "startLines": "45,46",
+                        "startLines": "46,47",
                         "startColumns": "4,4",
-                        "startOffsets": "4459,4543",
+                        "startOffsets": "4553,4637",
                         "endColumns": "83,85",
-                        "endOffsets": "4538,4624"
+                        "endOffsets": "4632,4718"
                     }
                 },
                 {
@@ -72,7 +55,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\d292caa4d82c25bb90a8d49a455091ff\\workspace\\transformed\\core-1.12.0\\res\\values-ar\\values-ar.xml",
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\6009c9b0fe67d751a97af6fb6309d962\\workspace\\transformed\\core-1.13.1\\res\\values-ar\\values-ar.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -81,11 +64,28 @@
                         "endOffsets": "143,245,340,443,546,648,762,863"
                     },
                     "to": {
-                        "startLines": "2,3,4,5,6,7,8,41",
+                        "startLines": "2,3,4,5,6,7,8,42",
                         "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,198,300,395,498,601,703,4087",
+                        "startOffsets": "105,198,300,395,498,601,703,4181",
                         "endColumns": "92,101,94,102,102,101,113,100",
-                        "endOffsets": "193,295,390,493,596,698,812,4183"
+                        "endOffsets": "193,295,390,493,596,698,812,4277"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Admin\\.gradle\\caches\\9.3.1\\transforms\\d8e7e0359aa9a2a39c3ff3ae90fe9f72\\workspace\\transformed\\ui-release\\res\\values-ar\\values-ar.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,194,277,372,470,555,636,742,826,907,988,1071,1141,1220,1299,1373,1449,1523",
+                        "endColumns": "88,82,94,97,84,80,105,83,80,80,82,69,78,78,73,75,73,120",
+                        "endOffsets": "189,272,367,465,550,631,737,821,902,983,1066,1136,1215,1294,1368,1444,1518,1639"
+                    },
+                    "to": {
+                        "startLines": "9,10,29,30,31,32,33,34,35,36,37,38,39,40,41,43,44,45",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "817,906,3085,3180,3278,3363,3444,3550,3634,3715,3796,3879,3949,4028,4107,4282,4358,4432",
+                        "endColumns": "88,82,94,97,84,80,105,83,80,80,82,69,78,78,73,75,73,120",
+                        "endOffsets": "901,984,3175,3273,3358,3439,3545,3629,3710,3791,3874,3944,4023,4102,4176,4353,4427,4548"
                     }
                 }
             ]
